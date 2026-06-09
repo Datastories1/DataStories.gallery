@@ -2,109 +2,202 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  background: #c6dff8;
+  color: #0f172a;
+}
 
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
 
-@layer base {
-  :root {
+/* NAVBAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #206694;
+}
 
-    --background: 0 0% 100%;
+.logo {
+  font-weight: bold;
+  font-size: 18px;
+}
 
-    --foreground: 0 0% 3.9%;
+.nav-links a,
+.auth-links a {
+  margin: 0 10px;
+  text-decoration: none;
+  color: #333;
+}
 
-    --card: 0 0% 100%;
+.btn-primary {
+  background: #274464;
+  color: white !important;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
 
-    --card-foreground: 0 0% 3.9%;
+/* HERO */
+.hero {
+  text-align: center;
+  padding: 80px 20px;
+}
 
-    --popover: 0 0% 100%;
+.hero h1 {
+  font-size: 42px;
+}
 
-    --popover-foreground: 0 0% 3.9%;
+.hero p {
+  color: #494949;
+  margin-top: 10px;
+}
 
-    --primary: 0 0% 9%;
+/* BUTTON */
+.btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #2e3e57;
+  color: white;
+  text-decoration: none;
+}
 
-    --primary-foreground: 0 0% 98%;
+/* CARD */
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  transition: 0.2s;
+}
 
-    --secondary: 0 0% 96.1%;
+.card:hover {
+  transform: translateY(-3px);
+}
 
-    --secondary-foreground: 0 0% 9%;
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
 
-    --muted: 0 0% 96.1%;
+/* INPUT */
+.input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 12px;
+}
 
-    --muted-foreground: 0 0% 45.1%;
+/* FORM */
+.form {
+  max-width: 400px;
+  margin: auto;
+}
+/* src/app/globals.css */
 
-    --accent: 0 0% 96.1%;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    --accent-foreground: 0 0% 9%;
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(135, 206, 247, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(135, 206, 247, 0.06)1px);
+  background-size: 48px 48px;
+}
 
-    --destructive: 0 84.2% 60.2%;
+.glow-amber {
+  box-shadow: 0 0 80px rgba(33, 83, 223, 0.18), 0 0 200px rgba(245,158,11,0.06);
+}
 
-    --destructive-foreground: 0 0% 98%;
+.stat-card:hover {
+  background: #c6dff8;
+  border-color: rgba(32, 82, 138, 0.5);
+  transform: translateY(-4px);
+}
 
-    --border: 0 0% 89.8%;
+.value-card:hover {
+  background: rgba(25, 66, 94, 0.05);
+  border-color: rgba(4, 33, 77, 0.3);
+}
 
-    --input: 0 0% 89.8%;
+.team-card:hover .avatar-ring {
+  box-shadow: 0 0 0 3px var(--accent-color);
+}
 
-    --ring: 0 0% 3.9%;
+.timeline-dot {
+  position: relative;
+}
 
-    --chart-1: 12 76% 61%;
+.timeline-dot::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #045468;
+  border: 3px solid #15889c;
+  box-shadow: 0 0 12px rgba(49, 84, 148, 0.6);
+  z-index: 1;
+}
 
-    --chart-2: 173 58% 39%;
+.marquee-track {
+  display: flex;
+  gap: 48px;
+  animation: marquee 22s linear infinite;
+  white-space: nowrap;
+}
 
-    --chart-3: 197 37% 24%;
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 
-    --chart-4: 43 74% 66%;
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(3deg); }
+}
 
-    --chart-5: 27 87% 67%;
+.float-shape {
+  animation: float 7s ease-in-out infinite;
+}
 
-    --radius: 0.5rem
-  }
-  .dark {
+.cta-btn {
+  background: linear-gradient(135deg, #357f96, #021e35);
+  color: #88cfe0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: all 0.2s;
+}
 
-    --background: 0 0% 3.9%;
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(33, 80, 107, 0.35);
+}
 
-    --foreground: 0 0% 98%;
+.outline-btn {
+  border: 1.5px solid rgba(100, 152, 231, 0.5);
+  color: #1c3381;
+  transition: all 0.2s;
+}
 
-    --card: 0 0% 3.9%;
-
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 3.9%;
-
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 0 0% 98%;
-
-    --primary-foreground: 0 0% 9%;
-
-    --secondary: 0 0% 14.9%;
-
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 14.9%;
-
-    --muted-foreground: 0 0% 63.9%;
-
-    --accent: 0 0% 14.9%;
-
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 14.9%;
-
-    --input: 0 0% 14.9%;
-
-    --ring: 0 0% 83.1%;
-
-    --chart-1: 220 70% 50%;
-
-    --chart-2: 160 60% 45%;
-
-    --chart-3: 30 80% 55%;
-
-    --chart-4: 280 65% 60%;
-
-    --chart-5: 340 75% 55%
-  }
+.outline-btn:hover {
+  background: rgba(40, 48, 58, 0.1);
+  border-color: #273b52;
 }

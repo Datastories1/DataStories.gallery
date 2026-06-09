@@ -1,5 +1,21 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Local Env Secrets
+.env
+.env.local
+.env.production
 
+# Power BI & Heavy Assets
+*.pbix
+*.PBIX
+
+# Next.js build outputs
+.next/
+out/
+node_modules/
+
+# OS trash files
+.DS_Store
+Thumbs.db
 # dependencies
 /node_modules
 /.pnp

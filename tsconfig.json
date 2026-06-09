@@ -35,7 +35,16 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
-    "next.config.js"
+    "next.config.js",
+    "src/app/page.js",
+    "src/app/layout.js",
+    "src/app/signup/page.js",
+    "src/app/login/page.js",
+    "src/app/dashboard/page.js",
+    "src/app/api/stripe/webhook/route.js",
+    "src/app/about/page.js",
+    "src/app/templates/[slug]/page.js",
+    "src/app/templates/page.js"
   ],
   "exclude": [
     "node_modules"

@@ -1,0 +1,84 @@
+/* Dashboard.css */
+
+.dashboard-page {
+  min-height: 100vh;
+  background: #f8fbff;
+  color: #1E3A5F;
+  font-family: 'DM Sans', sans-serif;
+  padding: 2rem;
+}
+
+.dashboard-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.dashboard-card {
+  max-width: 600px;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+.dashboard-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.dashboard-input:focus {
+  border-color: #1E3A5F;
+  box-shadow: 0 0 0 2px rgba(30,58,95,0.2);
+}
+
+.dashboard-file {
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.dashboard-file::-webkit-file-upload-button {
+  background-color: #1E3A5F;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.dashboard-file::-webkit-file-upload-button:hover {
+  background-color: #2f4f77;
+}
+
+.dashboard-btn {
+  background: #1E3A5F;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+.dashboard-btn:hover {
+  background: #2f4f77;
+}
