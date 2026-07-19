@@ -7,6 +7,7 @@ import { FiSend } from 'react-icons/fi';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import './ContactUs.css';
+import Link from "next/link";
 
 export default function ContactPage() {
   const formRef = useRef();
@@ -145,6 +146,15 @@ export default function ContactPage() {
             {loading ? "Sending..." : "Send Message"} <FiSend />
           </button>
         </form>
+      </div>
+      {/* Consultancy Section */}
+      <div className="consultancy-section">
+        <section className="cta">
+          <h2 className="cta-title">Ready to build your data story?</h2>
+          <Link href="/" className="btn">
+            Browse Templates
+          </Link>
+        </section>
       </div>
     </div>
   );

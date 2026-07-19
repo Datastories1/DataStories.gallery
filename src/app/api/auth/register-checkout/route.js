@@ -1,0 +1,108 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+
+// 🔌 Import the entire modules as defaults to bypass Webpack's named checking completely
+import mongoModuleDefault from "@/lib/mongodb";
+import mailerModuleDefault from "@/lib/downloadMailer";
+
+export async function POST(req) {
+  try {
+    const { userName, email, password, phoneNumber, country, organizationName } = await req.json();
+
+    if (!email || !password || !userName) {
+      return NextResponse.json(
+        { message: "Missing required profile credentials or setup parameters." },
+        { status: 400 }
+      );
+    }
+
+    // 1️⃣ Resolve database connection function dynamically from the module object
+    let connectFn = null;
+    if (typeof mongoModuleDefault === "function") {
+      connectFn = mongoModuleDefault;
+    } else if (mongoModuleDefault && typeof mongoModuleDefault.connectToDatabase === "function") {
+      connectFn = mongoModuleDefault.connectToDatabase;
+    } else if (mongoModuleDefault && typeof mongoModuleDefault.connectDB === "function") {
+      connectFn = mongoModuleDefault.connectDB;
+    }
+
+    if (!connectFn) {
+      throw new Error("Could not find a valid database connection function in your mongodb utility file.");
+    }
+
+    const connection = await connectFn();
+    
+    // 2️⃣ Safely extract the db instance
+    let db;
+    if (connection && typeof connection.db === "function") {
+      db = connection.db();
+    } else if (connection && connection.db) {
+      db = connection.db;
+    } else {
+      db = connection; 
+    }
+
+    if (!db || typeof db.collection !== "function") {
+      throw new Error("Database connected, but collection pointer method is unavailable.");
+    }
+
+    // 3️⃣ Duplicate Account Check
+    const existingUser = await db.collection("users").findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "CONFLICT_ACCOUNT_EXISTS", message: "This email address is already registered." },
+        { status: 409 }
+      );
+    }
+
+    // 4️⃣ Hash Password & Save User
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUserDoc = {
+      name: userName,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      phoneNumber: phoneNumber || "",
+      country: country || "Jordan",
+      organization: organizationName || "",
+      createdAt: new Date(),
+      role: "user"
+    };
+
+    await db.collection("users").insertOne(newUserDoc);
+
+    // 5️⃣ Dispatch Purchase Confirmation Email
+    try {
+      let sendMailFn = null;
+      if (typeof mailerModuleDefault === "function") {
+        sendMailFn = mailerModuleDefault;
+      } else if (mailerModuleDefault && typeof mailerModuleDefault.sendDownloadEmail === "function") {
+        sendMailFn = mailerModuleDefault.sendDownloadEmail;
+      }
+
+      if (typeof sendMailFn === "function") {
+        await sendMailFn({
+          email: email.toLowerCase(),
+          name: userName
+        });
+        console.log(`✉️ Direct mail distribution successfully dispatched to: ${email.toLowerCase()}`);
+      } else {
+        console.warn("⚠️ Warning: Mailer was found but its export function signature could not be matched.");
+      }
+    } catch (mailError) {
+      console.error("❌ Critical: Mail transmission module failure inside route handler:", mailError);
+    }
+
+    return NextResponse.json(
+      { message: "Workspace user account compiled successfully." },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error("❌ Core Registration Process System Exception:", error);
+    return NextResponse.json(
+      { message: error.message || "An unexpected processing error occurred on the internal server layers." },
+      { status: 500 }
+    );
+  }
+}

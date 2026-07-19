@@ -36,7 +36,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "next.config.js",
-    "src/app/page.js",
+    "src/app/OLD-page.js",
     "src/app/layout.js",
     "src/app/signup/page.js",
     "src/app/login/page.js",

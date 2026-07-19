@@ -249,3 +249,67 @@
 .send-btn:hover {
   background-color: #0a1d52;
 }
+/* --- BOTTOM CALL TO ACTION (CTA) SECTION --- */
+
+.consultancy-section{
+  margin-top: 60px;
+  padding: 40px 20px;
+}
+.cta {
+  width: 100%;
+  background: #ffffff; 
+  padding: 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-top: 1px solid #edf2f7;
+}
+
+/* CTA Heading Text */
+.cta-title {
+  color: #1e3a8a;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  margin-bottom: 25px;
+  letter-spacing: -0.02em;
+}
+
+/* CTA Button Styling */
+.cta .btn {
+  display: inline-block;
+  background: #1e3a8a;
+  color: #ffffff !important;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 15px 36px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(30, 58, 138, 0.15);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Button Hover State */
+.cta .btn:hover {
+  background: #112361;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.25);
+}
+
+/* Button Active State */
+.cta .btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustment for mobile screens */
+@media (max-width: 640px) {
+  .cta {
+    padding: 60px 20px;
+  }
+  .cta .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}

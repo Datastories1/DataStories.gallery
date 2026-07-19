@@ -4,47 +4,51 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Reduced height since the form is now shorter */
   min-height: 100vh; 
   background-color: #f0f2f5;
   background-image: url('/background.png'); 
   background-position: center;
   background-size: 20%; 
   background-repeat: repeat; 
+  padding: 20px 0; /* Added breathing room for short viewports */
 }
 
 .signup-card {
-  /* Reduced from 500px to a standard 400px */
   width: 100%;
-  max-width: 400px;
-  
-  /* Reduced padding from 50px to 32px for a tighter look */
-  padding: 32px; 
+  max-width: 380px; /* Compressed slightly from 400px */
+  padding: 20px 24px; /* Compressed padding for a tighter container look */
   border-radius: 12px;
   background: white;
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 .signup-title {
-  /* Reduced font size for a cleaner header */
-  font-size: 28px; 
-  margin-bottom: 24px;
+  font-size: 22px; /* Compressed from 28px */
+  margin-bottom: 4px; /* Reduced gap to keep subtitles tight */
   text-align: center;
   color: #1e293b;
   font-weight: 700;
 }
 
+.signup-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 16px; /* Compressed bottom gutter space */
+  line-height: 1.4;
+}
+
 .signup-input {
   width: 100%;
   box-sizing: border-box;
-  /* Reduced padding and font size for a compact feel */
-  padding: 12px 16px;
-  font-size: 15px; 
-  margin-bottom: 16px;
-  border-radius: 8px;
+  padding: 10px 14px; /* Reduced from 12px/16px to feel more compact */
+  font-size: 14px; /* Balanced size configuration */
+  margin-bottom: 0px; /* Managed entirely by container row items now */
+  border-radius: 6px; /* Slightly tighter curves */
   border: 1px solid #cbd5e1;
   outline: none;
   transition: all 0.2s;
+  height: 38px; /* Standard explicit field height restriction */
 }
 
 .signup-input:focus {
@@ -57,29 +61,32 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
-  font-size: 14px; 
+  margin-bottom: 14px;
+  font-size: 13px; 
   color: #64748b;
 }
 
 .signup-checkbox-container input {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   cursor: pointer;
 }
 
 .signup-button {
   width: 100%;
-  /* Scaled down button padding and font */
-  padding: 14px;
-  font-size: 16px; 
+  padding: 11px; /* Scaled down for sleek execution */
+  font-size: 15px; 
   font-weight: 600;
   background: #1E3A5F;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.3s;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .signup-button:hover {
@@ -87,9 +94,8 @@
 }
 
 .signup-footer {
-  margin-top: 20px;
-  /* Reduced footer text size */
-  font-size: 14px; 
+  margin-top: 14px; /* Compressed spacer boundaries */
+  font-size: 13px; 
   text-align: center;
   color: #64748b;
 }
@@ -98,4 +104,282 @@
   color: #2563eb;
   text-decoration: none;
   font-weight: 600;
+}
+
+/* --- Advanced Interface Utilities --- */
+
+/* Error styling matching image styles */
+.signup-error-alert {
+  color: #e11d48;
+  background-color: #fff1f2;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+  border: 1px solid #ffe4e6;
+  line-height: 1.4;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Password criteria box layout rules */
+.password-criteria-panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #f8fafc;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 12px;
+  margin-bottom: 0;
+  text-align: left;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.password-criteria-panel.visible {
+  max-height: 160px; /* Reduced scale clearance */
+  opacity: 1;
+  padding: 10px 12px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  border-color: #e2e8f0;
+}
+
+.criteria-heading {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+}
+
+.password-criteria-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.password-criteria-panel li {
+  font-size: 11px; /* Tighter baseline fonts */
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.password-criteria-panel li span {
+  font-weight: bold;
+}
+
+.password-criteria-panel li.unmet {
+  color: #94a3b8;
+}
+.password-criteria-panel li.met {
+  color: #16a34a;
+}
+
+/* Combined dialing layout adjustments */
+.phone-input-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.dial-code-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #cbd5e1; 
+  border-radius: 6px;
+  padding-left: 8px;
+  min-width: 95px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.dial-code-select {
+  border: none;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  padding-left: 24px;
+  font-size: 14px;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.inline-flag-display {
+  position: absolute;
+  left: 8px;
+  pointer-events: none;
+  font-size: 16px;
+}
+
+.phone-number-field {
+  flex-grow: 1;
+}
+
+/* Main Country Select Adjustments */
+.country-select-input {
+  padding-left: 36px !important;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+}
+
+.country-dropdown-flag {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+  z-index: 10;
+}
+
+/* --- Field Container and Typography Layouts --- */
+.input-field-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 12px; /* Decreased field step gaps from 16px */
+  text-align: left;
+}
+
+.field-element-label {
+  font-size: 12px; /* Reduced from 13px */
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px; /* Reduced margin spacer */
+}
+
+/* --- Custom Styled Dropdown Suite --- */
+.custom-dropdown-root {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.phone-input-row .custom-dropdown-root {
+  width: auto; /* Allow phone wrapper select component to snap naturally */
+}
+
+.dropdown-trigger-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 10px;
+  height: 38px; /* Locked directly to 38px match with `.signup-input` */
+  cursor: pointer;
+  font-size: 13px; /* Cleaner font scaling profile */
+  color: #334155;
+  user-select: none;
+  min-width: 95px; /* Scaled down slightly */
+  box-sizing: border-box;
+}
+
+.generic-country-trigger {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.dropdown-text-span {
+  font-weight: 500;
+}
+
+.dropdown-arrow-icon {
+  font-size: 9px;
+  color: #64748b;
+}
+
+/* Dropdown list popup wrapper */
+.custom-dropdown-options-list {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  width: 100%;
+  min-width: 210px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.custom-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px; /* Compressed option rows */
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.custom-dropdown-option:hover {
+  background: #f1f5f9;
+}
+
+.custom-dropdown-option.selected {
+  background: #e2e8f0;
+  font-weight: 600;
+}
+
+/* --- Nested Inline Search Input Styles --- */
+.dropdown-search-box {
+  width: calc(100% - 12px);
+  margin: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  outline: none;
+  box-sizing: border-box;
+  height: 30px;
+}
+
+.dropdown-search-box:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.05);
+}
+
+/* --- Core Dropdown Wrapper Scroll Limitations --- */
+.dropdown-scrollable-area {
+  max-height: 180px; /* Reduced height tracking down from 240px */
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Fallback status messaging */
+.no-results-msg {
+  padding: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* Explicit layout styling rules for images */
+.dropdown-flag-img {
+  width: 20px; /* Sleeker asset width mapping */
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+  flex-shrink: 0;
 }

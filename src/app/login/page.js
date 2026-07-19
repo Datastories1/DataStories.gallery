@@ -11,7 +11,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   
   // Dynamic fallback: loops back to checkout selection if intercepted, or falls back to templates
-  const callbackUrl = searchParams.get("callbackUrl") || '/template';
+  const callbackUrl = searchParams.get("callbackUrl") || '/';
   
   // State for Login
   const [email, setEmail] = useState('');

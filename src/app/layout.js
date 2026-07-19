@@ -1,27 +1,27 @@
 "use client";
 
-import { useState } from "react"; // Added React state for managing pop-ups
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SessionProvider, useSession, signOut } from "next-auth/react"; 
+import { CartProvider, useCart } from "@/context/CartContext"; // 🛒 Added Cart state tracking
+import CartSidebar from "@/components/CartSidebar"; // 🛒 Added sidebar drawers
+import { FaShoppingCart } from "react-icons/fa"; // Imported interactive shopping cart icon
 import "./RootLayout.css";
 
-// Sub-wrapper component handles page context, session data, and custom modal layouts natively
 function LayoutContent({ children }) {
   const pathname = usePathname();
   const { data: session, status } = useSession(); 
+  const { cartItems, setIsCartOpen } = useCart(); // 🛒 Consume cart attributes dynamically
 
-  // Modal display states for legal links
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // This variable is true only if we are NOT on login or signup pages
   const showNavbar = pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && pathname !== '/reset-password';
 
   return (
     <>
-      {/* Only render Navbar if not on login/signup */}
       {showNavbar && (
         <nav className="navbar">
           <div className="logo">
@@ -35,18 +35,51 @@ function LayoutContent({ children }) {
             Future to BI | datastories.gallery
           </div>
 
-          <div className="nav-links">
-            <Link href="/template" className="btn-link">Templates</Link>
-            <Link href="/about" className="btn-link">About</Link>
-            <Link href="/contactus" className="btn-link">Contact Us</Link>
-          </div>
+          <div className="auth-links" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            {/* 🛒 FLOATING SIDEBAR TOGGLE TRIGGER */}
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              style={{
+                position: "relative",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#1e3a8a",
+                fontSize: "22px",
+                display: "flex",
+                alignItems: "center",
+                padding: "8px"
+              }}
+              title="Open Shopping Cart"
+            >
+              <FaShoppingCart />
+              {cartItems.length > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: "-4px",
+                  right: "-4px",
+                  backgroundColor: "#16a34a",
+                  color: "#ffffff",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  borderRadius: "50%",
+                  width: "18px",
+                  height: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
+                }}>
+                  {cartItems.length}
+                </span>
+              )}
+            </button>
 
-          <div className="auth-links">
             {status === "loading" ? (
               <span style={{ color: "#64748b", fontSize: "14px" }}>Verifying auth...</span>
             ) : session ? (
               <button 
-                onClick={() => signOut({ callbackUrl: "/about" })} 
+                onClick={() => signOut({ callbackUrl: "/" })} 
                 className="btn"
                 style={{ background: "#ef4444", color: "white", border: "none", cursor: "pointer" }}
               >
@@ -58,16 +91,14 @@ function LayoutContent({ children }) {
                 <Link href="/signup" className="btn">Sign Up</Link>
               </>
             )}
-          </div>
+          </div> 
         </nav>
       )}
 
-      {/* MAIN CONTENT */}
       <main className="main-content">
         {children}
       </main>
 
-      {/* Only render Footer if not on login/signup */}
       {showNavbar && (
         <footer className="site-footer">
           <div className="footer-container">
@@ -96,30 +127,19 @@ function LayoutContent({ children }) {
               </div>
             </div>
 
-            {/* 🎯 UPDATED CATEGORY LINKS: Appends exact category filters so your templates page sidebar filters instantly */}
             <div className="footer-col">
               <h3 className="col-title">Templates</h3>
               <ul className="footer-links">
-                <li><Link href="/template?category=Sales">Sales Analytics</Link></li>
-                <li><Link href="/template?category=HR">HR Analytics</Link></li>
-                <li><Link href="/template?category=Marketing">Marketing Analytics</Link></li>
-                <li><Link href="/template?category=Finance">Finance Dashboard</Link></li>
-                <li><Link href="/template?category=Banking">Banking Dashboard</Link></li>
-                <li><Link href="/template?category=Operations">Operations Dashboard</Link></li>
-                <li><Link href="/template?category=Executive">Executive Dashboard</Link></li>
+                <li><Link href="/?category=Sales">Sales Analytics</Link></li>
+                <li><Link href="/?category=HR">HR Analytics</Link></li>
+                <li><Link href="/?category=Marketing">Marketing Analytics</Link></li>
+                <li><Link href="/?category=Finance">Finance Dashboard</Link></li>
+                <li><Link href="/?category=Banking">Banking Dashboard</Link></li>
+                <li><Link href="/?category=Operations">Operations Dashboard</Link></li>
+                <li><Link href="/?category=Executive">Executive Dashboard</Link></li>
               </ul>
             </div>
 
-            <div className="footer-col">
-              <h3 className="col-title">Company</h3>
-              <ul className="footer-links">
-                <li><Link href="/about">About Future To BI</Link></li>
-                <li><Link href="/contactus">Contact Us</Link></li>
-                <li><Link href="/template">Browse All Templates</Link></li>
-              </ul>
-            </div>
-
-            {/* 🎯 UPDATED LEGAL ACTIONS: Click events trigger modern modal windows rather than empty href anchors */}
             <div className="footer-col legal-col">
               <h3 className="col-title">Legal</h3>
               <ul className="footer-links">
@@ -147,48 +167,29 @@ function LayoutContent({ children }) {
         </footer>
       )}
 
-      {/* ==================== 🔒 DYNAMIC PRIVACY POLICY MODAL ==================== */}
+      {/* ==================== Privacy Policy Modal ==================== */}
       {showPrivacyModal && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-          backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)",
-          display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999
-        }}>
-          <div style={{
-            backgroundColor: "#ffffff", padding: "40px 30px", borderRadius: "16px",
-            width: "90%", maxWidth: "550px", position: "relative", fontFamily: "sans-serif",
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
-          }}>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999 }}>
+          <div style={{ backgroundColor: "#ffffff", padding: "40px 30px", borderRadius: "16px", width: "90%", maxWidth: "550px", position: "relative", fontFamily: "sans-serif", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
             <button onClick={() => setShowPrivacyModal(false)} style={{ position: "absolute", top: "15px", right: "20px", background: "none", border: "none", fontSize: "24px", color: "#94a3b8", cursor: "pointer" }}>&times;</button>
             <h3 style={{ color: "#1e3a8a", fontSize: "22px", margin: "0 0 15px 0" }}>Privacy Policy</h3>
             <div style={{ color: "#334155", fontSize: "14px", lineHeight: "1.6", maxHeight: "300px", overflowY: "auto", paddingRight: "10px", textAlign: "left" }}>
               <p>Your privacy is highly important to us. At Future To BI, it is our policy to respect your privacy regarding any details we collect across our application gallery storefront.</p>
-              <p style={{ marginTop: "12px" }}>We only ask for profile identifiers (Name, Email, Phone Number) when processing template distribution requirements or running safe account creation routines. Data is stored safely within protected database clusters and is never shared outside fulfillment operations.</p>
-              <p style={{ marginTop: "12px" }}>Financial transactions are handled securely through Stripe. No card metrics or balance criteria touch our local servers.</p>
+              <p style={{ marginTop: "12px" }}>We only ask for profile identifiers (Name, Email, Phone Number) when processing template distribution requirements or running safe account creation routines.</p>
             </div>
             <button onClick={() => setShowPrivacyModal(false)} style={{ marginTop: "25px", width: "100%", backgroundColor: "#1e3a8a", color: "#ffffff", padding: "12px", borderRadius: "8px", fontWeight: "600", border: "none", cursor: "pointer" }}>Close Privacy Statement</button>
           </div>
         </div>
       )}
 
-      {/* ==================== 🔒 DYNAMIC TERMS & CONDITIONS MODAL ==================== */}
+      {/* ==================== Terms & Conditions Modal ==================== */}
       {showTermsModal && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-          backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)",
-          display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999
-        }}>
-          <div style={{
-            backgroundColor: "#ffffff", padding: "40px 30px", borderRadius: "16px",
-            width: "90%", maxWidth: "550px", position: "relative", fontFamily: "sans-serif",
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
-          }}>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999 }}>
+          <div style={{ backgroundColor: "#ffffff", padding: "40px 30px", borderRadius: "16px", width: "90%", maxWidth: "550px", position: "relative", fontFamily: "sans-serif", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
             <button onClick={() => setShowTermsModal(false)} style={{ position: "absolute", top: "15px", right: "20px", background: "none", border: "none", fontSize: "24px", color: "#94a3b8", cursor: "pointer" }}>&times;</button>
             <h3 style={{ color: "#1e3a8a", fontSize: "22px", margin: "0 0 15px 0" }}>Terms & Conditions</h3>
             <div style={{ color: "#334155", fontSize: "14px", lineHeight: "1.6", maxHeight: "300px", overflowY: "auto", paddingRight: "10px", textAlign: "left" }}>
               <p>By accessing DataStories Gallery, you agree to comply with our platform terms, active licensing structures, and download conditions.</p>
-              <p style={{ marginTop: "12px" }}><strong>License Use:</strong> Purchases grant you a single-user license to implement, tweak, and apply our custom dashboard structures for internal business intelligence reports or personal client consulting projects. Reselling, redistributing, or re-licensing raw `.pbix` source files directly on competing storefronts is strictly prohibited.</p>
-              <p style={{ marginTop: "12px" }}><strong>Digital Delivery Notice:</strong> Because templates deliver instant file access right after Stripe authorization runs, all sales are final.</p>
             </div>
             <button onClick={() => setShowTermsModal(false)} style={{ marginTop: "25px", width: "100%", backgroundColor: "#1e3a8a", color: "#ffffff", padding: "12px", borderRadius: "8px", fontWeight: "600", border: "none", cursor: "pointer" }}>Accept & Close Terms</button>
           </div>
@@ -198,13 +199,16 @@ function LayoutContent({ children }) {
   );
 }
 
-// Global entry point provides the core SessionContext scope to all interior child routes
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="dm-sans syne">
         <SessionProvider>
-          <LayoutContent>{children}</LayoutContent>
+          <CartProvider>
+            <LayoutContent>{children}</LayoutContent>
+            {/* 🛒 Global overlay component rendering across views layout */}
+            <CartSidebar />
+          </CartProvider>
         </SessionProvider>
       </body>
     </html>

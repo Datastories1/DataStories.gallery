@@ -1,61 +1,68 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-//  FIXED IMPORT: Import dbConnect as a default module import
 import dbConnect from "@/lib/mongodb"; 
 import Template from "@/models/Template";
 
 export async function POST(req) {
   try {
-    const { templateId, customerEmail } = await req.json();
+    const { items, customerEmail } = await req.json();
 
-    if (!templateId) {
-      return NextResponse.json({ error: "Template ID is required" }, { status: 400 });
+    // 1. Ensure cart items are provided properly
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: "Cart items are required" }, { status: 400 });
     }
 
-    // 1. Connect to MongoDB using your actual function name
+    // 2. Safely connect to your MongoDB Cluster
     await dbConnect();
 
-    // 2. Fetch the template data directly from your database
-    const template = await Template.findById(templateId);
-    if (!template) {
-      return NextResponse.json({ error: "Template not found in database" }, { status: 404 });
+    // 3. Extract and parse standard IDs or MongoDB Object IDs from your cart
+    const templateIds = items.map(item => {
+      if (!item) return null;
+      if (typeof item === 'object') {
+        return item._id?.$oid ? item._id.$oid : String(item._id);
+      }
+      return String(item);
+    }).filter(Boolean);
+
+    // 4. Look up templates from your DB to calculate total amount securely
+    const templates = await Template.find({ _id: { $in: templateIds } });
+
+    if (!templates || templates.length === 0) {
+      return NextResponse.json({ error: "No templates found in database" }, { status: 404 });
     }
 
-    // 3. Create the Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer_email: customerEmail || undefined, // Pre-fills if email is present, otherwise ignores safely
+    // Calculate absolute pricing based entirely on verified database entries
+    const grandTotalCents = templates.reduce((acc, template) => {
+      const itemPrice = template.price || 0;
+      return acc + Math.round(itemPrice * 100);
+    }, 0);
+
+    // Guard constraint to avoid Stripe breaking on zero-value orders
+    if (grandTotalCents <= 0) {
+      return NextResponse.json({ error: "Invalid order amount total calculated" }, { status: 400 });
+    }
+
+    const firstTemplateId = String(templateIds[0]);
+
+    // 5. Build your payment intent terminal payload with 2-week expiration baseline
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: grandTotalCents,
+      currency: "usd",
+      receipt_email: customerEmail || undefined,
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              // Adjust to your exact schema field name (e.g., template.title or template.name)
-              name: template.title || template.name, 
-              description: template.subtitle || "Power BI Template Download",
-              images: template.thumbnailImage ? [template.thumbnailImage] : [],
-            },
-            // Stripe counts in cents. $300 becomes 30000 cents.
-            unit_amount: Math.round(template.price * 100), 
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      // CRITICAL: Pass the ID into metadata so your webhook can find it later!
       metadata: {
-        dashboardId: template._id.toString(),
+        templateId: firstTemplateId,
+        dashboardId: firstTemplateId,
+        dashboardIds: JSON.stringify(templateIds), 
+        purchase_timestamp: String(Date.now()), // 🕒 Vital checkpoint for our 14-day protocol check
       },
-      // Redirect paths back to your application website
-      // Inside your stripe.checkout.sessions.create configuration:
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/template`,
     });
 
-    // Return the secure checkout link back to your client component
-    return NextResponse.json({ url: session.url });
+    // We return 'clientSecret' so your custom UI components initialize correctly without crashing!
+    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+
   } catch (err) {
-    console.error("Stripe Checkout Error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("Payment Intent Terminal Error:", err);
+    return NextResponse.json({ error: err.message || "Failed to establish terminal engine parameters" }, { status: 500 });
   }
 }
