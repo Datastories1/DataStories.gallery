@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs"; 
 import { sendWelcomeAccountEmail } from "@/lib/accountMailer";
-import { sendPurchaseConfirmationEmail } from "@/lib/purchaseMailer";
+import { sendPurchaseEmail } from '@/lib/downloadMailer';
 
 const baseUserStructure = new mongoose.Schema({
   userName: { type: String, required: true },
