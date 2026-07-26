@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // your custom next config options if any
+  swcMinify: false,
+  webpack: (config) => {
+    config.optimization.minimize = false;
+    return config;
+  },
 };
 
 if (process.env.NODE_ENV !== "production") {
@@ -12,7 +16,6 @@ if (process.env.NODE_ENV !== "production") {
       initFn();
     }
   } catch (err) {
-    // Gracefully bypass if Cloudflare dev tools are not needed locally
     console.warn("⚠️ OpenNext Cloudflare dev helper skipped:", err.message);
   }
 }

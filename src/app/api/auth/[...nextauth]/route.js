@@ -1,14 +1,23 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuthImport from "next-auth";
+import CredentialsImport from "next-auth/providers/credentials";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-// Ensure the User schema structure is registered with Mongoose
-const UserSchema = mongoose.models.User || mongoose.model("User", new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
-}, { collection: 'users' })); // Links directly to your 'users' collection in MongoDB
+// Handle CJS/ESM interop fallbacks for App Router
+const NextAuth = NextAuthImport.default || NextAuthImport;
+const CredentialsProvider = CredentialsImport.default || CredentialsImport;
+
+// Ensure the User schema structure is registered with Mongoose safely
+const UserSchema = new mongoose.Schema(
+  {
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+  },
+  { collection: "users" }
+);
+
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 export const authOptions = {
   providers: [
@@ -16,7 +25,7 @@ export const authOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -24,22 +33,18 @@ export const authOptions = {
         }
 
         await dbConnect();
-        
-        // 1. Look for the user inside your MongoDB collection
-        const user = await mongoose.models.User.findOne({ 
-          email: credentials.email.toLowerCase().trim() 
+
+        // Look for the user inside your MongoDB collection
+        const user = await User.findOne({
+          email: credentials.email.toLowerCase().trim(),
         });
-        
+
         if (!user) {
           throw new Error("No user found with this email account.");
         }
 
-        // 2. Validate passwords securely using bcrypt
+        // Validate passwords securely using bcrypt
         const isValid = await bcrypt.compare(credentials.password, user.password);
-        
-        // 💡 NOTE: If your signup page doesn't hash passwords yet and saves them as plain text, 
-        // comment out the bcrypt line above and use this line instead:
-        // const isValid = credentials.password === user.password;
 
         if (!isValid) {
           throw new Error("Incorrect password. Please try again.");
@@ -47,15 +52,14 @@ export const authOptions = {
 
         // Return user data to pass down to the session cookie
         return { id: user._id.toString(), email: user.email };
-      }
-    })
+      },
+    }),
   ],
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
   pages: {
-    // 🎯 POINT NEXTAUTH TO YOUR EXISTING LOGIN PAGE:
-    signIn: "/login", 
+    signIn: "/login",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -65,9 +69,9 @@ export const authOptions = {
     async session({ session, token }) {
       if (token && session.user) session.user.id = token.id;
       return session;
-    }
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.process?.env?.NEXTAUTH_SECRET || process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

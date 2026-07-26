@@ -104,7 +104,6 @@ body {
   max-width: 400px;
   margin: auto;
 }
-/* src/app/globals.css */
 
 * {
   box-sizing: border-box;
@@ -115,7 +114,7 @@ body {
 .hero-grid {
   background-image:
     linear-gradient(rgba(135, 206, 247, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(135, 206, 247, 0.06)1px);
+    linear-gradient(90deg, rgba(135, 206, 247, 0.06) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 

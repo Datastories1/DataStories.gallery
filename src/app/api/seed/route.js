@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
 import { NextResponse } from "next/server";
@@ -5,7 +7,6 @@ import { NextResponse } from "next/server";
 export async function GET() {
   await dbConnect();
 
-  // This is your sample data based on your screenshot
   const sampleTemplates = [
     {
       title: "HR Dashboard",
@@ -40,10 +41,21 @@ export async function GET() {
   ];
 
   try {
-    // This clears the collection and adds the fresh data
-    await Template.deleteMany({}); 
-    await Template.insertMany(sampleTemplates);
-    return NextResponse.json({ message: "Database seeded successfully!" });
+    // 1. Check existing template count FIRST
+    const count = await Template.countDocuments();
+
+    // 2. ONLY seed sample data if the collection is completely empty
+    if (count === 0) {
+      await Template.insertMany(sampleTemplates);
+      return NextResponse.json({ 
+        message: "Database was empty. Seeded initial sample templates successfully!" 
+      });
+    }
+
+    // 3. Protect existing collection if documents already exist
+    return NextResponse.json({ 
+      message: `Database already contains ${count} templates. Seed skipped to preserve live data.` 
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
