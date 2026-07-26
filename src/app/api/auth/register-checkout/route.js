@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-
-// 🔌 Import the entire modules as defaults to bypass Webpack's named checking completely
-import mongoModuleDefault from "@/lib/mongodb";
-import mailerModuleDefault from "@/lib/downloadMailer";
+import connectDB from "@/lib/mongodb";
+import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
 
 export async function POST(req) {
   try {
@@ -16,21 +14,8 @@ export async function POST(req) {
       );
     }
 
-    // 1️⃣ Resolve database connection function dynamically from the module object
-    let connectFn = null;
-    if (typeof mongoModuleDefault === "function") {
-      connectFn = mongoModuleDefault;
-    } else if (mongoModuleDefault && typeof mongoModuleDefault.connectToDatabase === "function") {
-      connectFn = mongoModuleDefault.connectToDatabase;
-    } else if (mongoModuleDefault && typeof mongoModuleDefault.connectDB === "function") {
-      connectFn = mongoModuleDefault.connectDB;
-    }
-
-    if (!connectFn) {
-      throw new Error("Could not find a valid database connection function in your mongodb utility file.");
-    }
-
-    const connection = await connectFn();
+    // 1️⃣ Connect to Database
+    const connection = await connectDB();
     
     // 2️⃣ Safely extract the db instance
     let db;
@@ -73,21 +58,14 @@ export async function POST(req) {
 
     // 5️⃣ Dispatch Purchase Confirmation Email
     try {
-      let sendMailFn = null;
-      if (typeof mailerModuleDefault === "function") {
-        sendMailFn = mailerModuleDefault;
-      } else if (mailerModuleDefault && typeof mailerModuleDefault.sendDownloadEmail === "function") {
-        sendMailFn = mailerModuleDefault.sendDownloadEmail;
-      }
-
-      if (typeof sendMailFn === "function") {
-        await sendMailFn({
+      if (typeof generateAndEmailDownloadLink === "function") {
+        await generateAndEmailDownloadLink({
           email: email.toLowerCase(),
           name: userName
         });
         console.log(`✉️ Direct mail distribution successfully dispatched to: ${email.toLowerCase()}`);
       } else {
-        console.warn("⚠️ Warning: Mailer was found but its export function signature could not be matched.");
+        console.warn("⚠️ Warning: generateAndEmailDownloadLink function is not available.");
       }
     } catch (mailError) {
       console.error("❌ Critical: Mail transmission module failure inside route handler:", mailError);

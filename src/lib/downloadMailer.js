@@ -122,3 +122,7 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
     throw error;
   }
 }
+
+// 🤝 Aliases to ensure Webpack never fails regardless of how route handlers import this file
+export const sendDownloadEmail = generateAndEmailDownloadLink;
+export default generateAndEmailDownloadLink;

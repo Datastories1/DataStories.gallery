@@ -3,7 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { sendDeliveryEmail } from "@/lib/email";
 import { getDownloadUrl } from "@/lib/delivery";
 // 1. Import your MongoDB connection and Template model
-import { connectToDB } from "@/lib/mongodb"; 
+import connectDB from "@/lib/mongodb";
 import Template from "@/models/Template";
 
 export const runtime = "nodejs"; 
@@ -32,7 +32,7 @@ export async function POST(req) {
       const session = event.data.object;
 
       // 2. Connect to your database
-      await connectToDB();
+      await connectDB();
 
       const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
         expand: ["line_items.data.price"],
