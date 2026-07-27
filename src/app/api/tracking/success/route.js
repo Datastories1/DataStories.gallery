@@ -4,7 +4,7 @@ import Stripe from "stripe";
 import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-export const runtime = 'edge';
+export const runtime = 'node.js';
 export async function POST(request) {
   try {
     if (mongoose.connection.readyState !== 1) {

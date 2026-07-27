@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
-export const runtime = 'nodejs';
+export const runtime = 'node.js';
 // ✉️ Destructure direct explicit named imports to completely solve the Next.js bundle warnings
 import { generateAndEmailDownloadLink } from "../../../../lib/downloadMailer";
 import { sendWelcomeAccountEmail } from "../../../../lib/accountMailer";

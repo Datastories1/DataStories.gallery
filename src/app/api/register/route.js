@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
-export const runtime = 'edge';
+export const runtime = 'node.js';
 // Initialize Resend with your environment variable API key
 const resend = new Resend(process.env.RESEND_API_KEY);
 

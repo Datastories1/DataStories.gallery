@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
-export const runtime = 'edge';
+export const runtime = 'node.js';
 export async function POST(req) {
   try {
     const { items, customerEmail } = await req.json();

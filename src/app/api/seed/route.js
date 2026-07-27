@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
 import { NextResponse } from "next/server";
-export const runtime = 'edge';
+export const runtime = 'node.js';
 export async function GET() {
   await dbConnect();
 

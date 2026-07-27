@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs"; 
 import { sendWelcomeAccountEmail } from "@/lib/accountMailer";
 import { sendPurchaseEmail } from '@/lib/downloadMailer';
-export const runtime = 'edge';
+export const runtime = 'node.js';
 const baseUserStructure = new mongoose.Schema({
   userName: { type: String, required: true },
   name: { type: String }, 
