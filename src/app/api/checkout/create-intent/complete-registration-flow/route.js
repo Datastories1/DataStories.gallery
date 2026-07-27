@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs"; 
 import { sendWelcomeAccountEmail } from "@/lib/accountMailer";
-import { sendPurchaseEmail } from '@/lib/downloadMailer';
+import { sendDownloadEmail } from '@/lib/downloadMailer';
 export const runtime = 'nodejs';
+
 const baseUserStructure = new mongoose.Schema({
   userName: { type: String, required: true },
   name: { type: String }, 
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phoneNumber: { type: String, required: true }, 
-  country: { type: String, required: true },     
+  country: { type: String, required: true },    
   organizationName: { type: String, default: "" },
   organization: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now }
@@ -25,7 +26,7 @@ const UserSchema = mongoose.model("User", baseUserStructure);
 export async function POST(req) {
   try {
     if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
+      await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/fallback_db");
     }
 
     const body = await req.json();
@@ -60,7 +61,7 @@ export async function POST(req) {
       name: userName,
       email: email.toLowerCase().trim(),
       phoneNumber: phoneNumber, 
-      country: country,         
+      country: country,        
       organizationName: organizationName,
       organization: organizationName,
       password: encryptedPassword
@@ -89,8 +90,8 @@ export async function POST(req) {
     }
 
     try {
-      if (typeof sendPurchaseConfirmationEmail === "function") {
-        await sendPurchaseConfirmationEmail(freshUserObject.email, items, userName);
+      if (typeof sendDownloadEmail === "function") {
+        await sendDownloadEmail(freshUserObject.email, items);
       } else {
         await fetch(`${req.nextUrl.origin}/api/emails/send-purchase-confirmation`, {
           method: "POST",
