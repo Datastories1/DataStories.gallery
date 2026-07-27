@@ -1,63 +1,72 @@
 import { NextResponse } from "next/server";
 import { Stripe } from "stripe";
-import dbConnect from "@/lib/mongodb";
+
+import { sendDeliveryEmail } from "@/lib/email";
+import { getDownloadUrl } from "@/lib/delivery";
+import connectDB from "@/lib/mongodb";
 import Template from "@/models/Template";
 
 export const runtime = 'nodejs';
 
 export async function POST(req) {
+  // Explicitly check for empty or missing string
+  const stripeKey = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.trim() !== "" 
+    ? process.env.STRIPE_SECRET_KEY 
+    : "sk_test_dummy_fallback_key_for_build";
+    
+  const stripe = new Stripe(stripeKey);
+  
+  const sig = req.headers.get("stripe-signature");
+  if (!sig) {
+    return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 });
+  }
+
+  const rawBody = await req.text();
+  let event;
+
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build");
-    const { items, customerEmail } = await req.json();
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "Cart items are required" }, { status: 400 });
-    }
-
-    await dbConnect();
-
-    const templateIds = items.map(item => {
-      if (!item) return null;
-      if (typeof item === 'object') {
-        return item._id?.$oid ? item._id.$oid : String(item._id);
-      }
-      return String(item);
-    }).filter(Boolean);
-
-    const templates = await Template.find({ _id: { $in: templateIds } });
-
-    if (!templates || templates.length === 0) {
-      return NextResponse.json({ error: "No templates found in database" }, { status: 404 });
-    }
-
-    const grandTotalCents = templates.reduce((acc, template) => {
-      const itemPrice = template.price || 0;
-      return acc + Math.round(itemPrice * 100);
-    }, 0);
-
-    if (grandTotalCents <= 0) {
-      return NextResponse.json({ error: "Invalid order amount total calculated" }, { status: 400 });
-    }
-
-    const firstTemplateId = String(templateIds[0]);
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: grandTotalCents,
-      currency: "usd",
-      receipt_email: customerEmail || undefined,
-      payment_method_types: ["card"],
-      metadata: {
-        templateId: firstTemplateId,
-        dashboardId: firstTemplateId,
-        dashboardIds: JSON.stringify(templateIds),
-        purchase_timestamp: String(Date.now()),
-      },
-    });
-
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
-
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET || "whsec_dummy_fallback"
+    );
   } catch (err) {
-    console.error("Payment Intent Terminal Error:", err);
-    return NextResponse.json({ error: err.message || "Failed to establish terminal engine parameters" }, { status: 500 });
+    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+
+      await connectDB();
+
+      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ["line_items.data.price"],
+      });
+
+      const customerEmail = fullSession.customer_details?.email || fullSession.customer_email;
+      if (!customerEmail) throw new Error("Customer email not found in session");
+
+      const dashboardId = fullSession.metadata?.dashboardId;
+      
+      const template = await Template.findById(dashboardId);
+      
+      if (!template) {
+        throw new Error(`No template found in MongoDB for ID: ${dashboardId}`);
+      }
+
+      const downloadUrl = template.oneDriveLink;
+
+      await sendDeliveryEmail({
+        to: customerEmail,
+        templateName: template.name,
+        downloadUrl,
+      });
+    }
+
+    return NextResponse.json({ received: true });
+  } catch (err) {
+    console.error("Webhook handling error:", err);
+    return NextResponse.json({ received: true, warning: err.message });
   }
 }
