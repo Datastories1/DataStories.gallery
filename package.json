@@ -13,9 +13,9 @@
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "next": "^14.2.25",
+    "next": "14.2.25",
     "next-auth": "^4.24.14",
-    "@auth/core": "^0.34.3",
+    "@auth/core": "^0.41.3",
     "@auth/mongodb-adapter": "^3.11.2",
     "@emailjs/browser": "^4.4.1",
     "@google-cloud/storage": "^7.19.0",
@@ -61,7 +61,7 @@
   },
   "overrides": {
     "@cloudflare/next-on-pages": {
-      "next": "^14.2.25"
+      "next": "$next"
     }
   }
 }
