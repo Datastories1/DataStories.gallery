@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { Stripe } from "stripe";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
+
 export const runtime = 'nodejs';
+
 export async function POST(req) {
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build");
     const { items, customerEmail } = await req.json();
 
     if (!items || !Array.isArray(items) || items.length === 0) {
