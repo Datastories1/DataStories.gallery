@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { stripe } from "@/lib/stripe";
 
 import { sendDeliveryEmail } from "@/lib/email";
@@ -6,8 +7,8 @@ import { getDownloadUrl } from "@/lib/delivery";
 // 1. Import your MongoDB connection and Template model
 import connectDB from "@/lib/mongodb";
 import Template from "@/models/Template";
+export const runtime = 'nodejs';
 
-export const runtime = "edge"; 
 
 export async function POST(req) {
   const sig = req.headers.get("stripe-signature");
