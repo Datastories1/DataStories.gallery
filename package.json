@@ -11,6 +11,10 @@
     "pages:build": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "next": "^14.2.25",
+    "next-auth": "^4.24.14",
     "@auth/core": "^0.34.3",
     "@auth/mongodb-adapter": "^3.11.2",
     "@emailjs/browser": "^4.4.1",
@@ -29,19 +33,16 @@
     "lucide-react": "^0.575.0",
     "mongodb": "^6.21.0",
     "mongoose": "^9.4.1",
-    "next": "^14.2.25",
-    "next-auth": "^4.24.14",
     "nodemailer": "^7.0.13",
     "picomatch": "^2.3.2",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
     "react-icons": "^5.6.0",
     "react-phone-number-input": "^3.4.16",
     "resend": "^6.12.4",
     "sharp": "^0.34.5",
     "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
@@ -56,8 +57,7 @@
     "tailwindcss": "^3.4.19",
     "typescript": "^5",
     "vercel": "^34.0.0",
-    "wrangler": "^3.114.17",
-    "zod": "^4.3.6"
+    "wrangler": "^3.114.17"
   },
   "overrides": {
     "@cloudflare/next-on-pages": {
