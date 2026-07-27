@@ -27,7 +27,7 @@
     "lucide-react": "^0.575.0",
     "mongodb": "^6.21.0",
     "mongoose": "^9.4.1",
-    "next": "^14.2.0",
+    "next": "^14.2.25",
     "next-auth": "^4.24.14",
     "nodemailer": "^7.0.13",
     "react": "^18.2.0",
@@ -57,7 +57,7 @@
   },
   "overrides": {
     "@cloudflare/next-on-pages": {
-      "next": "^14.2.0"
+      "next": "^14.2.25"
     }
   }
 }
