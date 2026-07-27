@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/mongodb";
 import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
-export const runtime = 'node.js';
+export const runtime = 'nodejs';
 export async function POST(req) {
   try {
     const { userName, email, password, phoneNumber, country, organizationName } = await req.json();

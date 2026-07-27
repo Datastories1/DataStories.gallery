@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
-export const runtime = 'node.js';
+export const runtime = 'nodejs';
 const Schema = mongoose.Schema;
 const IntentTrackerSchema = mongoose.models.IntentTracker?.schema || new Schema(
   {

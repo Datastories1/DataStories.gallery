@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import IntentTracker from "@/models/IntentTracker";
-export const runtime = 'node.js';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb"; // 💡 Connects your database cleanly
 import mongoose from "mongoose";
 import crypto from "crypto";
-export const runtime = 'node.js';
+export const runtime = 'nodejs';
 // Ensure Schema definitions are registered cleanly for MongoDB
 const UserSchema = mongoose.models.User || mongoose.model("User", new mongoose.Schema({
   name: { type: String, required: true },
