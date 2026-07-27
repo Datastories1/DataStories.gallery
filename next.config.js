@@ -1,8 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   swcMinify: false,
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.optimization.minimize = false;
+
+    if (isServer) {
+      // Prevents Webpack from failing when Node.js core modules are bundled for server/API routes
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        dns: false,
+        stream: false,
+        http: false,
+        https: false,
+        child_process: false,
+      };
+    }
+
     return config;
   },
 };
