@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-
+export const runtime = 'edge';
 export async function POST(req) {
   try {
     await dbConnect();

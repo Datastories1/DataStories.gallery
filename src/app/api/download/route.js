@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
-
+export const runtime = 'edge';
 const templateStructure = new mongoose.Schema({
   title: String,
   Link: String 

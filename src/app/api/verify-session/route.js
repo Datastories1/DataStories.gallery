@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
-
+export const runtime = 'edge';
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);

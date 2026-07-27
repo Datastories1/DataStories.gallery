@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { FaChevronLeft, FaChevronRight, FaShoppingCart, FaArrowLeft } from "react-icons/fa";
 import { useCart } from "@/context/CartContext"; 
 import styles from "./Details.module.css";
-
+export const runtime = 'edge';
 export default function ViewDetailPage({ params }) {
   const { id } = params; 
   const { addToCart, sessionTrackerId } = useCart(); // 🛒 Using central synchronized tracker

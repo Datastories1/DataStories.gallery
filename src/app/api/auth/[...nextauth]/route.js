@@ -3,7 +3,7 @@ import CredentialsImport from "next-auth/providers/credentials";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-
+export const runtime = 'edge';
 // Handle CJS/ESM interop fallbacks for App Router
 const NextAuth = NextAuthImport.default || NextAuthImport;
 const CredentialsProvider = CredentialsImport.default || CredentialsImport;
