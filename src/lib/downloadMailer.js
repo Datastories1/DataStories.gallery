@@ -2,8 +2,6 @@ import { Resend } from "resend";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "");
-
 const templateStructure = new mongoose.Schema({
   title: String,
   Link: String
@@ -16,6 +14,9 @@ const TemplateModel = mongoose.models.Template || mongoose.model("Template", tem
  */
 export async function generateAndEmailDownloadLink(customerEmail, templateIdOrArray) {
   try {
+    // Lazy-initialize Resend inside the function to avoid top-level build-time evaluation errors
+    const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_fallback_key");
+
     const cleanCustomerEmail = String(customerEmail).trim().toLowerCase();
     console.log(`📨 [Mailer System] Running asset generation for real buyer: ${cleanCustomerEmail}`);
     
