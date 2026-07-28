@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Stripe } from "stripe";
 
-import { sendDeliveryEmail } from "@/lib/email";
 import connectDB from "@/lib/mongodb";
 import Template from "@/models/Template";
 
@@ -64,6 +63,8 @@ export async function POST(req) {
 
       const downloadUrl = template.oneDriveLink;
 
+      // Lazy load mailer to prevent top-level Resend evaluation during build data collection
+      const { sendDeliveryEmail } = await import("@/lib/email");
       await sendDeliveryEmail({
         to: customerEmail,
         templateName: template.name,
