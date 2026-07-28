@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { Stripe } from "stripe";
+
+import { sendDeliveryEmail } from "@/lib/email";
 import connectDB from "@/lib/mongodb";
 import Template from "@/models/Template";
 
@@ -20,42 +22,58 @@ export async function POST(req) {
   } catch (err) {
     return NextResponse.json({ error: "Server configuration error: STRIPE_SECRET_KEY is missing." }, { status: 500 });
   }
+  
+  const sig = req.headers.get("stripe-signature");
+  if (!sig) {
+    return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 });
+  }
+
+  const rawBody = await req.text();
+  let event;
 
   try {
-    const body = await req.json();
-    const { items } = body;
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "No items provided for checkout." }, { status: 400 });
-    }
-
-    await connectDB();
-
-    let calculatedAmount = 0;
-    for (const item of items) {
-      const template = await Template.findById(item.id || item._id);
-      if (template && template.price) {
-        calculatedAmount += Number(template.price) * 100 * (item.quantity || 1);
-      }
-    }
-
-    if (calculatedAmount <= 0) {
-      return NextResponse.json({ error: "Invalid calculated total amount." }, { status: 400 });
-    }
-
-    // Create PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(calculatedAmount),
-      currency: "usd",
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        items: JSON.stringify(items.map(i => ({ id: i.id || i._id, quantity: i.quantity || 1 })))
-      }
-    });
-
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret }, { status: 200 });
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
-    console.error("Create intent error:", err);
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  }
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+
+      await connectDB();
+
+      const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ["line_items.data.price"],
+      });
+
+      const customerEmail = fullSession.customer_details?.email || fullSession.customer_email;
+      if (!customerEmail) throw new Error("Customer email not found in session");
+
+      const dashboardId = fullSession.metadata?.dashboardId;
+      
+      const template = await Template.findById(dashboardId);
+      
+      if (!template) {
+        throw new Error(`No template found in MongoDB for ID: ${dashboardId}`);
+      }
+
+      const downloadUrl = template.oneDriveLink;
+
+      await sendDeliveryEmail({
+        to: customerEmail,
+        templateName: template.name,
+        downloadUrl,
+      });
+    }
+
+    return NextResponse.json({ received: true });
+  } catch (err) {
+    console.error("Webhook handling error:", err);
+    return NextResponse.json({ received: true, warning: err.message });
   }
 }
