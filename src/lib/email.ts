@@ -1,14 +1,18 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY || "re_dummy_fallback_key_for_build";
+  return new Resend(apiKey);
+}
 
 export async function sendDeliveryEmail(params: {
   to: string;
   templateName: string;
   downloadUrl: string;
 }) {
-  const from = process.env.EMAIL_FROM!;
-  const support = process.env.SUPPORT_EMAIL!;
+  const resend = getResend();
+  const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  const support = process.env.SUPPORT_EMAIL || "support@example.com";
 
   const subject = `Your Power BI Template: ${params.templateName}`;
 
