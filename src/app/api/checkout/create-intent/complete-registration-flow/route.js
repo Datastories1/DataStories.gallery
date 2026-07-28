@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs"; 
 import { sendWelcomeAccountEmail } from "@/lib/accountMailer";
 import { sendDownloadEmail } from '@/lib/downloadMailer';
+
 export const runtime = 'nodejs';
 
 const baseUserStructure = new mongoose.Schema({
@@ -17,11 +18,7 @@ const baseUserStructure = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: "users" });
 
-if (mongoose.models.User) {
-  delete mongoose.models.User;
-}
-
-const UserSchema = mongoose.model("User", baseUserStructure);
+const UserSchema = mongoose.models.User || mongoose.model("User", baseUserStructure);
 
 export async function POST(req) {
   try {
