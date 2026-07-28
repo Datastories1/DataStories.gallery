@@ -1,9 +1,26 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { Stripe } from "stripe";
 import dbConnect from "@/lib/mongodb"; 
 import Template from "@/models/Template";
+
 export const runtime = 'nodejs';
+
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey || secretKey.trim() === "") {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  return new Stripe(secretKey);
+}
+
 export async function POST(req) {
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch (err) {
+    return NextResponse.json({ error: "Server configuration error: STRIPE_SECRET_KEY is missing." }, { status: 500 });
+  }
+
   try {
     const { items, customerEmail } = await req.json();
 
