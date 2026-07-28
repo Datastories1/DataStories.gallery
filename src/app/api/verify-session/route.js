@@ -1,13 +1,25 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
+import Stripe from "stripe";
 
 export const runtime = 'nodejs';
 
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build";
+  return new Stripe(secretKey);
+}
+
 export async function GET(req) {
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch (err) {
+    return NextResponse.json({ error: "Server configuration error: Stripe initialization failed." }, { status: 500 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get("session_id");
