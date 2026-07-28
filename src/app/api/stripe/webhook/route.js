@@ -8,8 +8,18 @@ import Template from "@/models/Template";
 
 export const runtime = 'nodejs';
 
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build";
+  return new Stripe(secretKey);
+}
+
 export async function POST(req) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build");
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch (err) {
+    return NextResponse.json({ error: "Server configuration error: Stripe initialization failed." }, { status: 500 });
+  }
   
   const sig = req.headers.get("stripe-signature");
   if (!sig) {
