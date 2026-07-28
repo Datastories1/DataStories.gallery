@@ -3,9 +3,21 @@ import mongoose from "mongoose";
 import Stripe from "stripe";
 import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export const runtime = 'nodejs';
+
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build";
+  return new Stripe(secretKey);
+}
+
 export async function POST(request) {
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch (err) {
+    return NextResponse.json({ error: "Server configuration error: Stripe initialization failed." }, { status: 500 });
+  }
+
   try {
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(process.env.MONGODB_URI);
