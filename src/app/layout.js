@@ -1,16 +1,14 @@
-"use client";
-
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SessionProvider, useSession, signOut } from "next-auth/react"; 
-import { CartProvider, useCart } from "@/context/CartContext"; // 🛒 Added Cart state tracking
-import CartSidebar from "@/components/CartSidebar"; // 🛒 Added sidebar drawers
-import { FaShoppingCart } from "react-icons/fa"; // Imported interactive shopping cart icon
+import { CartProvider, useCart } from "@/context/CartContext"; 
+import CartSidebar from "@/components/CartSidebar"; 
+import { FaShoppingCart } from "react-icons/fa"; 
 import "./RootLayout.css";
 
-// 🌟 Add metadata here so Next.js uses your logo.png as the favicon
+// 🌟 Metadata now sits safely in a Server Component context
 export const metadata = {
   title: "DataStories Gallery | Future To BI",
   description: "Premium Power BI dashboard templates",
@@ -20,9 +18,11 @@ export const metadata = {
 };
 
 function LayoutContent({ children }) {
+  "use client"; // Client logic isolated safely down here!
+
   const pathname = usePathname();
   const { data: session, status } = useSession(); 
-  const { cartItems, setIsCartOpen } = useCart(); // 🛒 Consume cart attributes dynamically
+  const { cartItems, setIsCartOpen } = useCart(); 
 
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -45,7 +45,6 @@ function LayoutContent({ children }) {
           </div>
 
           <div className="auth-links" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            {/* 🛒 FLOATING SIDEBAR TOGGLE TRIGGER */}
             <button 
               onClick={() => setIsCartOpen(true)}
               style={{
@@ -176,7 +175,6 @@ function LayoutContent({ children }) {
         </footer>
       )}
 
-      {/* ==================== Privacy Policy Modal ==================== */}
       {showPrivacyModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999 }}>
           <div style={{ backgroundColor: "#ffffff", padding: "40px 30px", borderRadius: "16px", width: "90%", maxWidth: "550px", position: "relative", fontFamily: "sans-serif", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
@@ -191,7 +189,6 @@ function LayoutContent({ children }) {
         </div>
       )}
 
-      {/* ==================== Terms & Conditions Modal ==================== */}
       {showTermsModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999 }}>
           <div style={{ backgroundColor: "#ffffff", padding: "40px 30px", borderRadius: "16px", width: "90%", maxWidth: "550px", position: "relative", fontFamily: "sans-serif", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
@@ -215,7 +212,6 @@ export default function RootLayout({ children }) {
         <SessionProvider>
           <CartProvider>
             <LayoutContent>{children}</LayoutContent>
-            {/* 🛒 Global overlay component rendering across views layout */}
             <CartSidebar />
           </CartProvider>
         </SessionProvider>
