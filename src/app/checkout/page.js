@@ -381,7 +381,7 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
               </div>
 
               <button type="submit" disabled={processing || !stripe} style={{ marginTop: "30px", width: "100%", backgroundColor: "#16a34a", color: "#fff", padding: "15px", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "16px", cursor: "pointer" }}>
-                {processing ? "Authorizing Secure Payment..." : `Confirm Payment $${cartTotal}.00`}
+                {processing ? "Authorizing Secure Payment..." : `Confirm Payment $${cartTotal}`}
               </button>
             </form>
           </div>
@@ -407,14 +407,14 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
 
                 <div style={{ flex: 1, display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "600", color: "#1e3a8a" }}>
                   <span style={{ maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</span>
-                  <span style={{ color: "#0f172a" }}>${item.price}.00</span>
+                  <span style={{ color: "#0f172a" }}>${item.price}</span>
                 </div>
               </div>
             ))}
           </div>
           <div style={{ borderTop: "1px solid #e2e8f0", marginTop: "20px", paddingTop: "20px", display: "flex", justifyContent: "space-between", fontWeight: "700", fontSize: "18px" }}>
             <span>Total:</span>
-            <span style={{ color: "#16a34a" }}>${cartTotal}.00</span>
+            <span style={{ color: "#16a34a" }}>${cartTotal}</span>
           </div>
         </div>
       </div>

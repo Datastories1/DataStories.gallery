@@ -83,7 +83,7 @@ export default function CartSidebar() {
           <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "20px", marginTop: "20px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <span style={{ fontSize: "15px", fontWeight: "600", color: "#475569" }}>Subtotal Amount:</span>
-              <span style={{ fontSize: "22px", fontWeight: "700", color: "#16a34a" }}>${getCartTotal()}.00</span>
+              <span style={{ fontSize: "22px", fontWeight: "700", color: "#16a34a" }}>${getCartTotal()}</span>
             </div>
             
             <button 
