@@ -95,7 +95,8 @@ export function CartProvider({ children }) {
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
+    const total = cartItems.reduce((sum, item) => sum + Number(item.price || 0), 0);
+    return total.toFixed(2);
   };
 
   return (
