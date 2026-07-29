@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
+import dbConnect from "@/lib/mongodb";
 export const runtime = 'nodejs';
 const templateStructure = new mongoose.Schema({
   title: String,
@@ -38,12 +39,7 @@ export async function GET(req) {
     }
 
     // 2. Connect to MongoDB
-    if (mongoose.connection.readyState !== 1) {
-      if (!process.env.MONGODB_URI) {
-        throw new Error("Missing MONGODB_URI connection string.");
-      }
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await dbConnect();
 
     // 3. Search database
     const targetQueryId = mongoose.Types.ObjectId.isValid(templateId) 

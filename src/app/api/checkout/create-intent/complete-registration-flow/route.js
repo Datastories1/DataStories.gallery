@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs";
+import dbConnect from "@/lib/mongodb";
 import { sendWelcomeAccountEmail } from "@/lib/accountMailer";
 import { sendDownloadEmail } from '@/lib/downloadMailer';
 
@@ -22,9 +23,7 @@ const UserSchema = mongoose.models.User || mongoose.model("User", baseUserStruct
 
 export async function POST(req) {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/fallback_db");
-    }
+    await dbConnect();
 
     const body = await req.json();
 

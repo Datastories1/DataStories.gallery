@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation"; 
 import { FaChevronLeft, FaChevronRight, FaShoppingCart, FaArrowLeft } from "react-icons/fa";
 import { useCart } from "@/context/CartContext"; 
 import styles from "./Details.module.css";
-export const runtime = 'edge';
+
 export default function ViewDetailPage({ params }) {
-  const { id } = params; 
+  const unwrappedParams = use(params);
+  const { id } = unwrappedParams; 
   const { addToCart, sessionTrackerId } = useCart(); // 🛒 Using central synchronized tracker
 
   const [template, setTemplate] = useState(null);
@@ -45,7 +46,6 @@ export default function ViewDetailPage({ params }) {
       } catch (err) {
         console.error("Pipeline template entry error:", err);
       } finally {
-        // 🚀 FIX: Correctly call the state setter function instead of treating boolean variable as a function
         setLoading(false);
       }
     }
@@ -95,7 +95,6 @@ export default function ViewDetailPage({ params }) {
         const url = template.details[key];
         if (url && typeof url === "string") {
           const cleanUrl = url.trim();
-          // 🚀 FIX: Accept either a local path (starts with /) OR a web fallback URL (starts with http)
           if ((cleanUrl.startsWith('/') || cleanUrl.startsWith('http')) && !cleanUrl.includes('...')) {
             images.push(cleanUrl);
           }

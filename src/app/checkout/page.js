@@ -434,7 +434,7 @@ function CheckoutStreamLoader() {
         return;
       }
       try {
-        const res = await fetch("/api/checkout/create-intent", {
+        const res = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ items: cartItems })

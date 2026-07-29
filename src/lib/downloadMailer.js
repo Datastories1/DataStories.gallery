@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import dbConnect from "@/lib/mongodb";
 
 const templateStructure = new mongoose.Schema({
   title: String,
@@ -25,12 +26,7 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
       return false;
     }
 
-    if (mongoose.connection.readyState !== 1) {
-      if (!process.env.MONGODB_URI) {
-        throw new Error("Missing MONGODB_URI connection string inside initialization.");
-      }
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await dbConnect();
 
     let itemIds = [];
     if (Array.isArray(templateIdOrArray)) {

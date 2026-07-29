@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import Stripe from "stripe";
+import dbConnect from "@/lib/mongodb";
 import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
 
 export const runtime = 'nodejs';
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build";
-  return new Stripe(secretKey);
+  return new Stripe(secretKey, { httpClient: Stripe.createFetchHttpClient() });
 }
 
 export async function POST(request) {
@@ -19,9 +19,7 @@ export async function POST(request) {
   }
 
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await dbConnect();
 
     const body = await request.json();
     const { payment_intent, customerEmail } = body;

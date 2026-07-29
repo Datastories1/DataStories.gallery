@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="full-page-wrapper">
       <div className="main-split-container">
-        <section className="left-half"><div className="image-container"><img src="/login.png" alt="Branding" className="large-brand-image" /></div></section>
+        <section className="left-half"><div className="image-container"><img src="/Login.png" alt="Branding" className="large-brand-image" /></div></section>
         <div className="vertical-divider"></div>
         <section className="right-half">
           <Suspense fallback={<p>Loading security configuration data...</p>}><ResetPasswordForm /></Suspense>

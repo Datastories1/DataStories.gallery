@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { Resend } from "resend";
+import dbConnect from "@/lib/mongodb";
 
 export const runtime = 'nodejs';
 
@@ -25,15 +26,6 @@ const UserSchema = new mongoose.Schema({
 
 // Prevent mongoose model re-compilation error during Next.js hot reloads
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
-
-// Safe database connection utility helper
-async function connectToDatabase() {
-  if (mongoose.connection.readyState >= 1) return;
-  if (!process.env.MONGODB_URI) {
-    throw new Error("Missing MONGODB_URI environmental key identifier inside environment vars.");
-  }
-  await mongoose.connect(process.env.MONGODB_URI);
-}
 
 export async function POST(req) {
   let resend;
@@ -63,7 +55,7 @@ export async function POST(req) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
     const normalizedEmail = email.trim().toLowerCase();
 
     // Verification check: Make sure account doesn't already exist

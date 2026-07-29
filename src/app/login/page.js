@@ -52,7 +52,7 @@ function LoginForm() {
         {/* LEFT HALF - Visual Branding Panel */}
         <section className="left-half">
           <div className="image-container">
-            <img src="/login.png" alt="Branding" className="large-brand-image" />
+            <img src="/Login.png" alt="Branding" className="large-brand-image" />
           </div>
         </section>
 

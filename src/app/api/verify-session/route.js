@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_fallback_key_for_build";
-  return new Stripe(secretKey);
+  return new Stripe(secretKey, { httpClient: Stripe.createFetchHttpClient() });
 }
 
 export async function GET(req) {

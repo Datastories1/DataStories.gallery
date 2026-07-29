@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
+import dbConnect from "@/lib/mongodb";
 import { generateAndEmailDownloadLink } from "@/lib/downloadMailer";
 
 export const runtime = 'nodejs';
@@ -36,9 +37,7 @@ function shouldUpdateStatus(currentStatus, newStatus) {
 
 export async function POST(request) {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
+    await dbConnect();
 
     const body = await request.json();
     const { sessionTrackerId, status, items, templateId, templateTitle, templatePrice, authorName, customerEmail } = body;

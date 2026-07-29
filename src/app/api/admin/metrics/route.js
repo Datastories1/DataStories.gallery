@@ -40,21 +40,12 @@
 // }
 
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
+import dbConnect from "@/lib/mongodb";
 import IntentTracker from "@/models/IntentTracker";
 
 export async function GET() {
   try {
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      return NextResponse.json({ error: "MONGODB_URI not configured" }, { status: 500 });
-    }
-
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(uri, {
-        bufferCommands: false,
-      });
-    }
+    await dbConnect();
 
     const employeeMetrics = await IntentTracker.aggregate([
       {
