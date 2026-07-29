@@ -10,6 +10,15 @@ import CartSidebar from "@/components/CartSidebar"; // 🛒 Added sidebar drawer
 import { FaShoppingCart } from "react-icons/fa"; // Imported interactive shopping cart icon
 import "./RootLayout.css";
 
+// 🌟 Add metadata here so Next.js uses your logo.png as the favicon
+export const metadata = {
+  title: "DataStories Gallery | Future To BI",
+  description: "Premium Power BI dashboard templates",
+  icons: {
+    icon: "/logo.png",
+  },
+};
+
 function LayoutContent({ children }) {
   const pathname = usePathname();
   const { data: session, status } = useSession(); 
