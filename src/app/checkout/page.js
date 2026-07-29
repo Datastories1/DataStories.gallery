@@ -8,7 +8,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { WORLD_REGIONS } from "../signup/countries";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
+const stripePromise = loadStripe("pk_live_51Sy7Nf1FxRpVn2WX5fUqZzz6EKApIFzKNMFR9E9wrBVRMr1p0p1BS7Ehrg3qc7LaHcZgdGrQUscJPU0HLcrtRsrJ00Pca1h1wg");
 
 const EyeOpenIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "18px", height: "18px" }}>
