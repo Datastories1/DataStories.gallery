@@ -32,7 +32,6 @@ const ChevronDownIcon = () => (
 const inputStyle = { width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box", marginTop: "6px" };
 const labelStyle = { fontSize: "14px", fontWeight: "600", color: "#334155" };
 
-// Helper component to render standard CDN country flags cleanly across Windows platforms
 const CountryFlagImage = ({ shortCode }) => {
   if (!shortCode) return <span style={{ fontSize: "16px" }}>🏳️</span>;
   const lowerCode = shortCode.toLowerCase();
@@ -66,7 +65,6 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
   const [countrySearch, setCountrySearch] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const countryRef = useRef(null);
@@ -92,7 +90,6 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Safe fallback matching dynamic variables if array structure alters
   const activeRegion = WORLD_REGIONS[selectedIdx] || { name: "Jordan", code: "+962", id: "jo", short: "JO" };
   const shortRegionCode = activeRegion.short || activeRegion.id || "JO";
 
@@ -112,7 +109,10 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) {
+      setValidationError("Stripe library is still initializing. Please wait a moment.");
+      return;
+    }
 
     setValidationError("");
     setAccountConflict(false);
@@ -144,6 +144,15 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
 
     const returnUrl = `${window.location.origin}/success?customerEmail=${encodeURIComponent(secureEmail)}&templateId=${targetTemplateId}&convertSession=${localSessionId}`;
 
+    // 1. Submit Elements validation first
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setValidationError(submitError.message);
+      setProcessing(false);
+      return;
+    }
+
+    // 2. Confirm payment using Stripe
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: "if_required",
@@ -288,13 +297,11 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
                     <input required type="password" style={inputStyle} placeholder="Confirm security check password" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} />
                   </div>
 
-                  {/* Phone Number Field with Custom Country Dropdown */}
                   <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "15px", position: "relative" }} ref={countryRef}>
                     <div>
                       <label style={labelStyle}>Phone Number</label>
                       <div style={{ display: "flex", marginTop: "6px", border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "visible", alignItems: "center", boxSizing: "border-box" }}>
                         
-                        {/* Interactive Country Code Picker Trigger */}
                         <div 
                           onClick={() => setIsCountryOpen(!isCountryOpen)}
                           style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", height: "45px", background: "#f8fafc", borderRight: "1px solid #cbd5e1", cursor: "pointer", userSelect: "none", borderTopLeftRadius: "7px", borderBottomLeftRadius: "7px" }}
@@ -314,7 +321,6 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
                         />
                       </div>
 
-                      {/* Dropdown Menu Portal Overlay Container */}
                       {isCountryOpen && (
                         <div style={{ position: "absolute", top: "72px", left: 0, width: "320px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", zIndex: 999, padding: "8px", boxSizing: "border-box" }}>
                           <input 
@@ -368,7 +374,11 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
               )}
 
               <h3 style={{ color: "#1e3a8a", margin: "20px 0 5px 0", fontSize: "19px", borderTop: session ? "none" : "1px solid #e2e8f0", paddingTop: session ? "0" : "25px", fontWeight: "700" }}>Payment Details</h3>
-              <PaymentElement options={{ layout: "tabs" }} />
+              
+              {/* Payment Element Container Box */}
+              <div style={{ padding: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", background: "#fff" }}>
+                <PaymentElement options={{ layout: "tabs" }} />
+              </div>
 
               <button type="submit" disabled={processing || !stripe} style={{ marginTop: "30px", width: "100%", backgroundColor: "#16a34a", color: "#fff", padding: "15px", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "16px", cursor: "pointer" }}>
                 {processing ? "Authorizing Secure Payment..." : `Confirm Payment $${cartTotal}.00`}
@@ -377,14 +387,12 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
           </div>
         </div>
 
-        {/* Right Side Pane: Summary view integrating dynamic thumbnail images */}
         <div style={{ backgroundColor: "#f8fafc", padding: "30px", borderRadius: "16px", border: "1px solid #e2e8f0", height: "fit-content" }}>
           <h3 style={{ color: "#0f172a", margin: "0 0 20px 0", fontSize: "18px", fontWeight: "700" }}>Order Review ({cartItems.length})</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {cartItems.map((item, index) => (
               <div key={index} style={{ display: "flex", gap: "15px", alignItems: "center", borderBottom: index !== cartItems.length - 1 ? "1px dashed #e2e8f0" : "none", paddingBottom: index !== cartItems.length - 1 ? "15px" : "0" }}>
                 
-                {/* Fixed Thumbnail Element Wrapper Container */}
                 <div style={{ width: "75px", height: "50px", borderRadius: "6px", backgroundColor: "#e2e8f0", overflow: "hidden", flexShrink: 0, border: "1px solid #cbd5e1" }}>
                   <img 
                     src={item.thumbnailImage || item.thumbnailUrl || "https://placehold.co/600x400?text=Power+BI"} 
