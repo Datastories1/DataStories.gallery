@@ -275,11 +275,11 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
                   
                   <div>
                     <label style={labelStyle}>Full Name</label>
-                    <input required type="text" style={inputStyle} placeholder="Syeda Shahbano Atif" value={formData.userName} onChange={e => setFormData({...formData, userName: e.target.value})} />
+                    <input required type="text" style={inputStyle} placeholder="Your Full Name" value={formData.userName} onChange={e => setFormData({...formData, userName: e.target.value})} />
                   </div>
                   <div>
                     <label style={labelStyle}>Email Address</label>
-                    <input required type="email" style={inputStyle} placeholder="Sh.Atif@FutureToBI.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    <input required type="email" style={inputStyle} placeholder="Your Email Address" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   </div>
 
                   <div>
