@@ -1,11 +1,5 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
-}
-
 function withTimeout(promise, ms, message) {
   let timer;
   const timeout = new Promise((_, reject) => {
@@ -14,7 +8,7 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-// Global caching mechanism to prevent Mongoose from opening a fresh connection 
+// Global caching mechanism to prevent Mongoose from opening a fresh connection
 // on every single API request, which avoids exhausting MongoDB pool sockets.
 let cached = global.mongoose;
 
@@ -26,6 +20,16 @@ async function dbConnect() {
   // If connection is already alive and ready, return it immediately
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
+  }
+
+  // Read and validate MONGODB_URI HERE, at call time, not at module import time.
+  // Next.js's build step statically imports every route module (including ones that import
+  // this file) to collect page data — if this check ran at the top of the module instead, it
+  // would throw and crash the entire production build the moment MONGODB_URI is unset in the
+  // build environment, even though the app would run fine once the runtime env var is present.
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
   }
 
   if (!cached.promise) {
