@@ -29,7 +29,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Cart items are required" }, { status: 400 });
     }
 
-    // 2. Safely connect to your MongoDB Cluster
+    // 2. Safely connect to your MongoDB Cluster using the shared utility
     await dbConnect();
 
     // 3. Extract and parse standard IDs or MongoDB Object IDs from your cart
@@ -61,21 +61,20 @@ export async function POST(req) {
 
     const firstTemplateId = String(templateIds[0]);
 
-    // 5. Build your payment intent terminal payload with 2-week expiration baseline
+    // 5. Build payment intent using automatic payment methods to support Apple Pay, Google Pay, and Cards
     const paymentIntent = await stripe.paymentIntents.create({
       amount: grandTotalCents,
       currency: "usd",
       receipt_email: customerEmail || undefined,
-      payment_method_types: ["card"],
+      automatic_payment_methods: { enabled: true },
       metadata: {
         templateId: firstTemplateId,
         dashboardId: firstTemplateId,
         dashboardIds: JSON.stringify(templateIds), 
-        purchase_timestamp: String(Date.now()), // 🕒 Vital checkpoint for our 14-day protocol check
+        purchase_timestamp: String(Date.now()),
       },
     });
 
-    // We return 'clientSecret' so your custom UI components initialize correctly without crashing!
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
 
   } catch (err) {

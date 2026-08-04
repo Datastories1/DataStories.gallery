@@ -15,14 +15,29 @@ const TemplateModel = mongoose.models.Template || mongoose.model("Template", tem
  */
 export async function generateAndEmailDownloadLink(customerEmail, templateIdOrArray) {
   try {
-    // Lazy-initialize Resend inside the function to avoid top-level build-time evaluation errors
     const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_fallback_key");
 
     const cleanCustomerEmail = String(customerEmail).trim().toLowerCase();
     console.log(`📨 [Mailer System] Running asset generation for real buyer: ${cleanCustomerEmail}`);
-    
+
     if (!process.env.RESEND_API_KEY) {
       console.error("❌ [Mailer System] CRITICAL ERROR: RESEND_API_KEY environment variable is missing!");
+      return false;
+    }
+
+    // Resolve the public base URL. Strip any trailing slash so we never end up with "//api".
+    const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+    const baseUrl = rawBaseUrl.trim().replace(/\/+$/, "");
+
+    // A localhost/empty base URL is only valid on your own dev machine. If this ships to a real
+    // buyer, the link is dead on arrival ("invalid link" / can't reach page) even though the
+    // token itself is fine. Fail loudly instead of silently emailing a broken link.
+    if (!baseUrl || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1")) {
+      console.error(
+        `❌ [Mailer System] CRITICAL ERROR: NEXT_PUBLIC_SITE_URL is missing or points to localhost ("${rawBaseUrl}"). ` +
+        `Refusing to email a download link the buyer can't reach. Set NEXT_PUBLIC_SITE_URL to your real ` +
+        `production domain (e.g. https://datastories.gallery) in your deployment environment variables.`
+      );
       return false;
     }
 
@@ -42,7 +57,6 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
 
     const queryIds = itemIds.map(id => mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id);
 
-    // Dynamic database search checking for string representation or standard ObjectIds
     const templatesData = await TemplateModel.find({
       $or: [
         { _id: { $in: queryIds } },
@@ -50,15 +64,9 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
       ]
     });
 
-    if (!templatesData || templatesData.length === 0) {
-      console.warn(`⚠️ [Mailer System] Check warning: Could not locate template item ids inside database collections.`);
-    }
-
     let itemsHtmlMarkup = "";
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const secretKey = process.env.JWT_SECRET || "JWT_SECRET_PASSPHRASE_KEY";
 
-    // Loop through the items found, fallback gracefully if query came back blank during manual sandbox checkouts
     const iterableItems = templatesData.length > 0 ? templatesData : itemIds.map(id => ({ _id: id, title: "Power BI Dashboard Template" }));
 
     for (const template of iterableItems) {
@@ -71,7 +79,6 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
         { expiresIn: "14d" }
       );
 
-      // Matches your download path route scheme
       const protectedProxyUrl = `${baseUrl}/api/download?token=${downloadToken}`;
 
       itemsHtmlMarkup += `
@@ -105,7 +112,7 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
 
     console.log(`📡 [Mailer System] Calling Resend API to deliver asset download link to: ${cleanCustomerEmail}`);
     const responseBlock = await resend.emails.send(emailPayload);
-    
+
     if (responseBlock.error) {
       console.error("❌ [Mailer System] Resend rejected payload request:", responseBlock.error);
       return false;
@@ -120,6 +127,5 @@ export async function generateAndEmailDownloadLink(customerEmail, templateIdOrAr
   }
 }
 
-// 🤝 Aliases to ensure Webpack never fails regardless of how route handlers import this file
 export const sendDownloadEmail = generateAndEmailDownloadLink;
 export default generateAndEmailDownloadLink;

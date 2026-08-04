@@ -24,7 +24,10 @@ export default function ViewDetailPage({ params }) {
       try {
         const res = await fetch(`/api/templates`);
         const allData = await res.json();
-        const found = allData.find(t => t._id === id);
+        
+        // Ensure allData is safely treated as an array to prevent crashes
+        const templatesArray = Array.isArray(allData) ? allData : (allData.templates || []);
+        const found = templatesArray.find(t => t._id === id);
         
         if (found) {
           setTemplate(found);

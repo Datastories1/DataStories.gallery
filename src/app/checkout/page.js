@@ -8,7 +8,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { WORLD_REGIONS } from "../signup/countries";
 
-const stripePromise = loadStripe("pk_live_51Sy7Nf1FxRpVn2WX5fUqZzz6EKApIFzKNMFR9E9wrBVRMr1p0p1BS7Ehrg3qc7LaHcZgdGrQUscJPU0HLcrtRsrJ00Pca1h1wg");
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 const EyeOpenIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "18px", height: "18px" }}>
@@ -135,103 +135,134 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
     const combinedPhone = session ? "Logged Profile Profile" : `${activeRegion.code}${rawPhoneNumber}`;
     const clearCountry = session ? "Jordan" : activeRegion.name;
     const localSessionId = localStorage.getItem("sessionTrackerId") || "session_fallback_id";
-    const targetTemplateId = typeof cartItems[0]._id === 'object' && cartItems[0]._id?.$oid ? cartItems[0]._id.$oid : String(cartItems[0]._id);
 
+    // Build the full cleaned ID list for ALL cart items first, so both the singular
+    // (backward-compat) and plural URL params can be derived from the same source.
     const trackedItemsPayload = cartItems.map(item => {
       const cleanId = typeof item._id === 'object' && item._id?.$oid ? item._id.$oid : String(item._id);
       return { _id: cleanId, templateId: cleanId, title: item.title, price: item.price };
     });
 
-    const returnUrl = `${window.location.origin}/success?customerEmail=${encodeURIComponent(secureEmail)}&templateId=${targetTemplateId}&convertSession=${localSessionId}`;
+    const allTemplateIds = trackedItemsPayload.map(item => item._id);
+    // Kept for any code path that still reads the singular "templateId" param.
+    const targetTemplateId = allTemplateIds[0];
 
-    // 1. Submit Elements validation first
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setValidationError(submitError.message);
-      setProcessing(false);
-      return;
-    }
+    // "templateIds" (plural, JSON array) carries the FULL cart through to /success — this is
+    // the param success/page.js checks first. Previously only "templateId" (singular, first
+    // item) was included here, which is why only one purchased item ever showed up post-checkout.
+    const returnUrl = `${window.location.origin}/success?customerEmail=${encodeURIComponent(secureEmail)}&templateId=${targetTemplateId}&templateIds=${encodeURIComponent(JSON.stringify(allTemplateIds))}&convertSession=${localSessionId}`;
 
-    // 2. Confirm payment using Stripe
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-      confirmParams: {
-        return_url: returnUrl,
-        payment_method_data: {
-          billing_details: {
-            name: secureName,
-            email: secureEmail
+    try {
+      // 1. Validate elements input first
+      const { error: submitError } = await elements.submit();
+      if (submitError) {
+        setValidationError(submitError.message);
+        setProcessing(false);
+        return;
+      }
+
+      // 2. Create the PaymentIntent on-demand right now upon clicking pay (Zero stray incomplete records if user leaves early!)
+      const intentRes = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cartItems, currency: "usd" })
+      });
+      const intentData = await intentRes.json();
+
+      if (!intentRes.ok || !intentData.clientSecret) {
+        setValidationError(intentData.error || "Failed to initialize payment gateway session.");
+        setProcessing(false);
+        return;
+      }
+
+      const freshClientSecret = intentData.clientSecret;
+
+      // 3. Confirm payment using Stripe with the newly created clientSecret
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret: freshClientSecret,
+        redirect: "if_required",
+        confirmParams: {
+          return_url: returnUrl,
+          payment_method_data: {
+            billing_details: {
+              name: secureName,
+              email: secureEmail
+            }
           }
-        }
-      },
-    });
+        },
+      });
 
-    if (error) {
-      setValidationError(error.message || "An error occurred with your card processing transaction layer.");
-      setProcessing(false);
-      return;
-    }
+      if (error) {
+        setValidationError(error.message || "An error occurred with your card processing transaction layer.");
+        setProcessing(false);
+        return;
+      }
 
-    if (paymentIntent && paymentIntent.status === "succeeded") {
-      try {
+      if (paymentIntent && paymentIntent.status === "succeeded") {
         try {
-          await fetch("/api/tracking", {
+          try {
+            await fetch("/api/tracking", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sessionTrackerId: localSessionId, status: "sold", items: trackedItemsPayload })
+            });
+          } catch (tErr) { console.error(tErr); }
+
+          const orderResponse = await fetch("/api/checkout/process-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionTrackerId: localSessionId, status: "sold", items: trackedItemsPayload })
+            body: JSON.stringify({
+              isLoggedIn: !!session,
+              userName: secureName,
+              email: secureEmail,
+              password: formData.password,
+              phoneNumber: combinedPhone,
+              country: clearCountry,
+              organizationName: formData.organizationName,
+              cartItems: trackedItemsPayload,
+              paymentIntentId: paymentIntent.id
+            })
           });
-        } catch (tErr) { console.error(tErr); }
 
-        const orderResponse = await fetch("/api/checkout/process-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            isLoggedIn: !!session,
-            userName: secureName,
-            email: secureEmail,
-            password: formData.password,
-            phoneNumber: combinedPhone,
-            country: clearCountry,
-            organizationName: formData.organizationName,
-            cartItems: trackedItemsPayload,
-            paymentIntentId: paymentIntent.id
-          })
-        });
+          const orderResult = await orderResponse.json();
 
-        const orderResult = await orderResponse.json();
-
-        if (!orderResponse.ok) {
-          if (orderResult.error === "CONFLICT_ACCOUNT_EXISTS") {
-            setAccountConflict(true);
+          if (!orderResponse.ok) {
+            if (orderResult.error === "CONFLICT_ACCOUNT_EXISTS") {
+              setAccountConflict(true);
+              setProcessing(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+            setValidationError(orderResult.message || "An error occurred while compiling your subscription.");
             setProcessing(false);
-            window.scrollTo({ top: 0, behavior: "smooth" });
             return;
           }
-          setValidationError(orderResult.message || "An error occurred while compiling your subscription.");
-          setProcessing(false);
-          return;
+
+          if (!session) {
+            await signIn("credentials", {
+              redirect: false,
+              email: secureEmail.toLowerCase(),
+              password: formData.password,
+            });
+          }
+
+          clearCart();
+          localStorage.removeItem("checkout_backup_cart");
+          router.push(returnUrl);
+
+        } catch (pipelineError) {
+          console.error("Post processing order pipeline error:", pipelineError);
+          clearCart();
+          router.push(returnUrl);
         }
-
-        if (!session) {
-          await signIn("credentials", {
-            redirect: false,
-            email: secureEmail.toLowerCase(),
-            password: formData.password,
-          });
-        }
-
-        clearCart();
-        localStorage.removeItem("checkout_backup_cart");
-        router.push(returnUrl);
-
-      } catch (pipelineError) {
-        console.error("Post processing order pipeline error:", pipelineError);
-        clearCart();
-        router.push(returnUrl);
+      } else {
+        window.location.href = returnUrl;
       }
-    } else {
-      window.location.href = returnUrl;
+    } catch (err) {
+      console.error("Payment confirmation catch error:", err);
+      setValidationError("An unexpected error occurred during checkout processing.");
+      setProcessing(false);
     }
   };
 
@@ -368,7 +399,7 @@ function CheckoutFormDetails({ cartItems, cartTotal }) {
 
                   <div>
                     <label style={labelStyle}>Organization Name (Optional)</label>
-                    <input type="text" style={inputStyle} placeholder="Future To BI" value={formData.organizationName} onChange={e => setFormData({...formData, organizationName: e.target.value})} />
+                    <input type="text" style={inputStyle} placeholder="Organization Name" value={formData.organizationName} onChange={e => setFormData({...formData, organizationName: e.target.value})} />
                   </div>
                 </>
               )}
@@ -432,35 +463,18 @@ export default function CheckoutPage() {
 
 function CheckoutStreamLoader() {
   const { cartItems, getCartTotal } = useCart();
-  const [clientSecret, setClientSecret] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function initIntent() {
-      if (cartItems.length === 0) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await fetch("/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: cartItems })
-        });
-        const data = await res.json();
-        if (data.clientSecret) setClientSecret(data.clientSecret);
-      } catch (err) { console.error(err); }
-      setLoading(false);
-    }
-    initIntent();
-  }, [cartItems]);
-
-  if (loading) return <div style={{ textAlign: "center", padding: "100px" }}>Building terminal channels...</div>;
   if (cartItems.length === 0) return <div style={{ textAlign: "center", padding: "100px" }}>Your shopping cart is empty.</div>;
-  if (!clientSecret) return <div style={{ textAlign: "center", padding: "100px", color: "#ef4444" }}>Could not connect to Stripe gateway layout.</div>;
 
+  const pubKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  if (!pubKey || pubKey.includes("...") || !pubKey.startsWith("pk_")) {
+    return <div style={{ textAlign: "center", padding: "100px", color: "#ef4444", maxWidth: "600px", margin: "0 auto" }}>⚠️ Invalid or missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in your environment configuration (.env.local).</div>;
+  }
+
+  // Passing mode: 'payment', amount, and currency lets Stripe Elements mount instantly 
+  // without creating a backend PaymentIntent record until the user actually hits submit!
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret }}>
+    <Elements stripe={stripePromise} options={{ mode: 'payment', amount: Math.round(getCartTotal() * 100), currency: 'usd' }}>
       <CheckoutFormDetails cartItems={cartItems} cartTotal={getCartTotal()} />
     </Elements>
   );

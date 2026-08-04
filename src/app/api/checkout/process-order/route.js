@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
-import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
+import dbConnect from "@/lib/mongodb"; // Using centralized connection utility
+import mongoose from "mongoose";
 export const runtime = 'nodejs';
-// ✉️ Destructure direct explicit named imports to completely solve the Next.js bundle warnings
+
 import { generateAndEmailDownloadLink } from "../../../../lib/downloadMailer";
 import { sendWelcomeAccountEmail } from "../../../../lib/accountMailer";
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "test";
-
 export async function POST(req) {
-  let client;
   try {
     const body = await req.json();
     const { 
@@ -30,20 +27,22 @@ export async function POST(req) {
 
     const cleanEmail = email.toLowerCase().trim();
 
-    // 1️⃣ Connect to MongoDB
-    if (!uri) throw new Error("Missing MONGODB_URI environmental variable string.");
-    client = new MongoClient(uri);
-    await client.connect();
-    const db = client.db(dbName);
+    // 1️⃣ Connect to MongoDB through mongoose connection utility to prevent timeout exceptions
+    await dbConnect();
+    const db = mongoose.connection.db;
+    // Use mongoose's own ObjectId (mongoose.mongo.ObjectId), NOT the top-level "mongodb"
+    // package's ObjectId. mongoose.connection.db is driven by mongoose's internal mongodb/bson
+    // version, and its wire serializer rejects ObjectId instances built from a different bson
+    // version (BSONVersionError). mongoose.mongo.ObjectId is guaranteed to match.
+    const ObjectId = mongoose.mongo.ObjectId;
 
-    // 🔍 Secure Item Verification: Double check IDs exist in the database to prevent the "Mailer skipped" error
+    // 🔍 Secure Item Verification: Double check IDs exist in the database
     const rawTemplateIds = cartItems.map(item => {
       const rawId = item.templateId || item._id;
       if (rawId && typeof rawId === "object" && rawId.$oid) return String(rawId.$oid);
       return String(rawId);
     }).filter(id => id && id !== "undefined" && id !== "null");
 
-    // Map query IDs to support both strict MongoDB ObjectIds and raw text string IDs
     const queryIds = rawTemplateIds.map(id => ObjectId.isValid(id) ? new ObjectId(id) : id);
     
     const verifiedTemplates = await db.collection("templates").find({
@@ -53,7 +52,6 @@ export async function POST(req) {
       ]
     }).toArray();
 
-    // Re-extract valid string IDs from whatever templates exist inside your cluster right now
     const templateIds = verifiedTemplates.map(t => String(t._id));
 
     if (templateIds.length === 0) {
@@ -95,7 +93,6 @@ export async function POST(req) {
     // 3️⃣ FIRE BOTH EMAILS IN PARALLEL
     const emailPromises = [];
 
-    // Queue Up Email 1: Purchase / Download Email
     if (typeof generateAndEmailDownloadLink === "function") {
       emailPromises.push(
         generateAndEmailDownloadLink(cleanEmail, templateIds)
@@ -105,7 +102,6 @@ export async function POST(req) {
       console.error("❌ generateAndEmailDownloadLink is not a recognized function. Check your lib file.");
     }
 
-    // Queue Up Email 2: Welcome Details
     if (!isLoggedIn && typeof sendWelcomeAccountEmail === "function") {
       emailPromises.push(
         sendWelcomeAccountEmail(cleanEmail, userName || "Valued Customer")
@@ -113,7 +109,6 @@ export async function POST(req) {
       );
     }
 
-    // Fire them to your Mail Engine simultaneously
     if (emailPromises.length > 0) {
       const results = await Promise.allSettled(emailPromises);
       results.forEach((result, idx) => {
@@ -131,7 +126,5 @@ export async function POST(req) {
   } catch (error) {
     console.error("❌ Checkout Processing Exception:", error);
     return NextResponse.json({ message: error.message || "Internal server error." }, { status: 500 });
-  } finally {
-    if (client) await client.close();
   }
 }
