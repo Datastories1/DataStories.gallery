@@ -2,25 +2,47 @@ import { notFound } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
 import DetailClient from "./DetailClient";
+
+// Required: mongoose/MongoDB's driver needs a real Node.js runtime (it opens actual TCP
+// sockets), not the lightweight edge runtime. Every existing API route in this project already
+// declares this — Server Components need it too, or the Worker throws when this file tries to
+// connect to MongoDB (this was the cause of the "Worker threw exception" / Error 1101 crash).
 export const runtime = 'nodejs';
-// Server Component: runs on the server/edge at request time. Fetches ONLY the single
-// template matching this id directly from MongoDB — no HTTP round-trip to your own
-// /api/templates route, and no downloading the entire templates collection just to find
-// one document. This is the main fix for the slow load on the deployed site: previously
-// the whole page waited on the client to hydrate, then fetch every template, then filter.
+
 export default async function ViewDetailPage({ params }) {
   const { id } = await params;
 
-  await dbConnect();
-
   let templateDoc = null;
+  let connectionFailed = false;
+
   try {
+    // dbConnect() and the query are wrapped in the SAME try/catch. Previously dbConnect() sat
+    // outside the try/catch — so when the Atlas connection timed out or failed (common on the
+    // free M0 tier under Cloudflare's connection pattern), it threw uncaught and crashed the
+    // whole Worker (Error 1101) instead of being handled gracefully here.
+    await dbConnect();
     templateDoc = await Template.findById(id).lean();
   } catch (err) {
-    // Invalid ObjectId format, or a genuine lookup failure — treat both as "not found"
-    // rather than crashing the page.
     console.error("Detail page template lookup failed:", err);
+    connectionFailed = true;
     templateDoc = null;
+  }
+
+  if (connectionFailed) {
+    // The database itself was unreachable (timeout, network blip, etc.) — this is different
+    // from "this id doesn't exist." Show a retry-friendly message instead of a hard 404, since
+    // the template may well exist and a reload will likely succeed.
+    return (
+      <div style={{ padding: "80px 20px", textAlign: "center", fontFamily: "sans-serif" }}>
+        <h1 style={{ fontSize: "24px", color: "#991b1b", marginBottom: "12px" }}>
+          We couldn't load this page right now
+        </h1>
+        <p style={{ color: "#64748b", marginBottom: "24px" }}>
+          Our database is taking longer than expected to respond. Please refresh the page in a
+          few seconds.
+        </p>
+      </div>
+    );
   }
 
   if (!templateDoc) {
