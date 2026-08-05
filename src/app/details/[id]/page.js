@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
 import DetailClient from "./DetailClient";
-
+export const runtime = 'nodejs';
 // Server Component: runs on the server/edge at request time. Fetches ONLY the single
 // template matching this id directly from MongoDB — no HTTP round-trip to your own
 // /api/templates route, and no downloading the entire templates collection just to find

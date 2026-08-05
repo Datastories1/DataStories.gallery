@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
 import TemplatesClient from "./TemplatesClient";
+export const runtime = 'nodejs';
 
 // Server Component: fetches the templates list directly from MongoDB at request time,
 // on the server/edge. This removes the client-side "mount → hydrate → fetch /api/templates
