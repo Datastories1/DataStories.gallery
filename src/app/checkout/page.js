@@ -8,7 +8,17 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { WORLD_REGIONS } from "../signup/countries";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+// Guard against calling loadStripe() with an invalid/undefined key. Next.js prefetches linked
+// routes in the background, which can execute this module (and this loadStripe call) while the
+// user is on a completely different page. If NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY isn't set at
+// BUILD time (a separate requirement from runtime secrets — NEXT_PUBLIC_ vars are inlined into
+// the client bundle during the build), loadStripe(undefined) throws an uncaught error that can
+// break hydration/interactivity on whatever page happened to trigger the prefetch. Passing
+// stripePromise={null} to <Elements> is Stripe's documented safe "not ready yet" state.
+const pubKeyForStripe = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = (pubKeyForStripe && pubKeyForStripe.startsWith("pk_"))
+  ? loadStripe(pubKeyForStripe)
+  : null;
 
 const EyeOpenIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "18px", height: "18px" }}>
