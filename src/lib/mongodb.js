@@ -32,41 +32,37 @@ async function dbConnect() {
     throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
   }
 
-  if (!cached.promise) {
-    // Tuned for a serverless/edge execution model (Cloudflare Workers) talking to an Atlas M0
-    // free-tier cluster. M0 is shared, lower-priority infrastructure with a low connection cap —
-    // it can be genuinely slow or flaky under the connection pattern Cloudflare's globally
-    // distributed edge creates (many short-lived connection attempts from different locations).
-    // Timeouts are kept short so a failing connection fails FAST and returns a clear error,
-    // instead of hanging until Cloudflare's own Worker execution limit forcibly kills the
-    // request (which is what "Worker's code had hung" meant in your logs).
-    const opts = {
-      bufferCommands: false,
-      maxPoolSize: 1, // One connection per isolate — Workers are short-lived, not a persistent
-                       // long-running Node process, so a large pool doesn't help and adds
-                       // connection-setup overhead per cold start.
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 8000,
-      socketTimeoutMS: 10000,
-    };
+  // IMPORTANT: we deliberately do NOT cache the in-flight connection PROMISE across requests
+  // here (the previous version stored it on `cached.promise` for reuse by later requests).
+  // Cloudflare Workers can reuse a warm global scope across separate, unrelated requests — so
+  // if Request A starts connecting and gets canceled/times out before finishing, a cached
+  // pending promise stays around, and Request B awaiting that same stale promise can hang
+  // forever (Cloudflare's runtime detects and warns about exactly this: "A promise was resolved
+  // or rejected from a different request context than the one it was created in"). Each request
+  // now starts and awaits its OWN connection attempt end-to-end, avoiding cross-request promise
+  // sharing entirely. Only the fully-resolved connection is cached for reuse.
+  const opts = {
+    bufferCommands: false,
+    maxPoolSize: 1, // One connection per isolate — Workers are short-lived, not a persistent
+                     // long-running Node process, so a large pool doesn't help and adds
+                     // connection-setup overhead per cold start.
+    serverSelectionTimeoutMS: 8000,
+    connectTimeoutMS: 8000,
+    socketTimeoutMS: 10000,
+  };
 
-    cached.promise = withTimeout(
+  try {
+    const mongooseInstance = await withTimeout(
       mongoose.connect(MONGODB_URI, opts),
       9000,
       "Timed out connecting to MongoDB"
-    ).then((mongooseInstance) => {
-      return mongooseInstance;
-    });
-  }
-
-  try {
-    cached.conn = await cached.promise;
+    );
+    cached.conn = mongooseInstance;
+    return cached.conn;
   } catch (e) {
-    cached.promise = null;
+    cached.conn = null;
     throw e;
   }
-
-  return cached.conn;
 }
 
 export { dbConnect, dbConnect as connectToDB, dbConnect as connectDB, dbConnect as connectToDatabase };
