@@ -33,17 +33,26 @@ async function dbConnect() {
   }
 
   if (!cached.promise) {
+    // Tuned for a serverless/edge execution model (Cloudflare Workers) talking to an Atlas M0
+    // free-tier cluster. M0 is shared, lower-priority infrastructure with a low connection cap —
+    // it can be genuinely slow or flaky under the connection pattern Cloudflare's globally
+    // distributed edge creates (many short-lived connection attempts from different locations).
+    // Timeouts are kept short so a failing connection fails FAST and returns a clear error,
+    // instead of hanging until Cloudflare's own Worker execution limit forcibly kills the
+    // request (which is what "Worker's code had hung" meant in your logs).
     const opts = {
       bufferCommands: false,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
+      maxPoolSize: 1, // One connection per isolate — Workers are short-lived, not a persistent
+                       // long-running Node process, so a large pool doesn't help and adds
+                       // connection-setup overhead per cold start.
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 10000,
     };
 
     cached.promise = withTimeout(
       mongoose.connect(MONGODB_URI, opts),
-      35000,
+      9000,
       "Timed out connecting to MongoDB"
     ).then((mongooseInstance) => {
       return mongooseInstance;
