@@ -71,3 +71,21 @@ async function dbConnect() {
 
 export { dbConnect, dbConnect as connectToDB, dbConnect as connectDB, dbConnect as connectToDatabase };
 export default dbConnect;
+
+// Safe wrapper for Server Components (page.js files). Server Components have no default error
+// boundary here — an uncaught throw crashes the whole Worker (Cloudflare "Error 1101: Worker
+// threw exception"), even if the calling code has a try/catch, if that try/catch was ever
+// accidentally omitted or doesn't wrap this call specifically. This wrapper CANNOT throw — it
+// always returns a result object, so a page.js can never forget to handle a connection failure.
+// API routes should keep using dbConnect() directly (they rely on it throwing for their
+// existing try/catch → 500 JSON response pattern) — only page.js Server Components should use
+// this instead.
+export async function safeDbConnect() {
+  try {
+    const conn = await dbConnect();
+    return { ok: true, conn, error: null };
+  } catch (err) {
+    console.error("safeDbConnect: connection failed:", err);
+    return { ok: false, conn: null, error: err };
+  }
+}
