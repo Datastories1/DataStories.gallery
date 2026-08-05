@@ -1,48 +1,46 @@
 import { notFound } from "next/navigation";
-import { safeDbConnect } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import Template from "@/models/Template";
 import DetailClient from "./DetailClient";
 
-// Required: mongoose/MongoDB's driver needs a real Node.js runtime (it opens actual TCP
-// sockets), not the lightweight edge runtime.
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // Prevent static caching hanging issues on serverless
 
 export default async function ViewDetailPage({ params }) {
-  const { id } = await params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
 
-  // safeDbConnect() can never throw — it always returns { ok, conn, error }. This removes any
-  // chance of an uncaught exception crashing the Worker (Error 1101), which is what happened
-  // before when dbConnect() was called outside its try/catch, or if a try/catch was ever
-  // accidentally missed on a future page.
-  const { ok: connected } = await safeDbConnect();
-
-  if (!connected) {
-    return (
-      <div style={{ padding: "80px 20px", textAlign: "center", fontFamily: "sans-serif" }}>
-        <h1 style={{ fontSize: "24px", color: "#991b1b", marginBottom: "12px" }}>
-          We couldn't load this page right now
-        </h1>
-        <p style={{ color: "#64748b", marginBottom: "24px" }}>
-          Our database is taking longer than expected to respond. Please refresh the page in a
-          few seconds.
-        </p>
-      </div>
-    );
+  if (!id) {
+    notFound();
   }
 
   let templateDoc = null;
+
   try {
-    templateDoc = await Template.findById(id).lean();
+    // 1. Establish connection with a strict timeout wrapper or standard await
+    const dbPromise = dbConnect();
+    
+    // Add a race timeout so Cloudflare never hangs indefinitely if MongoDB Atlas is slow to respond
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Database connection timeout")), 8000)
+    );
+
+    await Promise.race([dbPromise, timeoutPromise]);
+
+    // 2. Fetch data safely using lean query with timeout protection
+    templateDoc = await Template.findById(id).maxTimeMS(5000).lean();
+
   } catch (err) {
-    console.error("Detail page template lookup failed:", err);
-    templateDoc = null;
+    console.error("❌ Detail page lookup error:", err.message);
+    // Return a fallback or trigger notFound gracefully instead of hanging
+    notFound();
   }
 
   if (!templateDoc) {
     notFound();
   }
 
-  // Server Components can only pass plain JSON-serializable data down to Client Components.
+  // Clean serialization for client component boundary
   const template = JSON.parse(JSON.stringify(templateDoc));
 
   return <DetailClient template={template} />;
