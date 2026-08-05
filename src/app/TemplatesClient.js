@@ -19,30 +19,14 @@ const marqueeItems = [
 
 export default function TemplatesClient({ initialTemplates }) {
   const searchParams = useSearchParams();
-  const { addToCart } = useCart();
+  const { addToCart, sessionTrackerId } = useCart(); // 🛒 Using central synchronized tracker
 
-  // Seeded directly from the server fetch — no loading state needed for the initial render,
-  // since the data is already here by the time this component mounts.
   const [allTemplates, setAllTemplates] = useState(initialTemplates || []);
   const [selectedCategory, setSelectedCategory] = useState("All Templates");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPrice, setSelectedPrice] = useState("All Prices");
   const [sortOrder, setSortOrder] = useState("Most Popular");
-  const [sessionTrackerId, setSessionTrackerId] = useState("");
 
-  // Establish a single, persistent session identifier for the browser session context
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      let currentSession = localStorage.getItem("sessionTrackerId");
-      if (!currentSession) {
-        currentSession = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-        localStorage.setItem("sessionTrackerId", currentSession);
-      }
-      setSessionTrackerId(currentSession);
-    }
-  }, []);
-
-  // Updated to pass strict lowercase "viewed" state
   const handleTrackView = async (template) => {
     if (!sessionTrackerId) return;
     try {
@@ -63,7 +47,6 @@ export default function TemplatesClient({ initialTemplates }) {
     }
   };
 
-  // Handler to log when a customer adds an item to their cart directly from the listing
   const handleAddToCartAndTrack = async (template) => {
     addToCart(template);
 
@@ -167,19 +150,16 @@ export default function TemplatesClient({ initialTemplates }) {
                 <div key={t._id} className="template-card">
                   {t.tag && <div className={`status status-${t.tag.toLowerCase()}`}>{t.tag}</div>}
 
-                  {/* Local path parsing layer with broken fallback image configuration underlay */}
-                      {/* 🚀 FIXED: Added an early exit to prevent infinite 404 loops */}
-                      <img 
-                        src={t.thumbnailImage || t.thumbnailUrl || ""} 
-                        alt={t.title || "Power BI Preview"} 
-                        onError={(e) => {
-                          // If the placeholder hasn't been tried yet, use it. Otherwise, stop to avoid a loop.
-                          if (!e.target.src.includes('placeholder.png')) {
-                            e.target.onerror = null; // Unbind the handler completely
-                            e.target.src = "https://placehold.co/600x400?text=No+Image"; 
-                          }
-                        }}
-                      />
+                  <img 
+                    src={t.thumbnailImage || t.thumbnailUrl || ""} 
+                    alt={t.title || "Power BI Preview"} 
+                    onError={(e) => {
+                      if (!e.target.src.includes('placeholder.png')) {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/600x400?text=No+Image"; 
+                      }
+                    }}
+                  />
                   
                   <h3>{t.title}</h3>
                   <p>{t.subtitle}</p>
@@ -188,13 +168,13 @@ export default function TemplatesClient({ initialTemplates }) {
                       <span className="price">${t.price}</span>
                     </div>
                     <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-                      <Link href={`/details/${t._id}`} onClick={() => handleTrackView(t)} style={{ flex: 1 }}>
-                        <button className="btn" style={{ width: "100%", padding: "10px 5px", fontSize: "13px" }}>Details</button>
+                      <Link href={`/details/${t._id}`} onClick={() => handleTrackView(t)} style={{ flex: 1, textDecoration: 'none' }}>
+                        <button className="btn" style={{ width: "100%", padding: "10px 5px", fontSize: "13px", cursor: "pointer" }}>Details</button>
                       </Link>
                       <button 
                         className="btn" 
                         onClick={() => handleAddToCartAndTrack(t)} 
-                        style={{ flex: 1, backgroundColor: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "10px 5px", fontSize: "13px", border: "none" }}
+                        style={{ flex: 1, backgroundColor: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "10px 5px", fontSize: "13px", border: "none", cursor: "pointer" }}
                       >
                         <FaShoppingCart /> +Cart
                       </button>

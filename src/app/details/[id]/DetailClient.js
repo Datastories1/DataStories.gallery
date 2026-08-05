@@ -2,22 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { FaChevronLeft, FaChevronRight, FaShoppingCart, FaArrowLeft } from "react-icons/fa";
 import { useCart } from "@/context/CartContext";
 import styles from "./Details.module.css";
 
 export default function DetailClient({ template }) {
   const router = useRouter();
-  const { addToCart, sessionTrackerId } = useCart(); // 🛒 Using central synchronized tracker
+  const { addToCart, sessionTrackerId } = useCart();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const trackedViewRef = useState({ done: false })[0];
 
   useEffect(() => {
-    // Fire the "viewed" tracking footprint once, as soon as the session tracker id is
-    // available. The template itself is already rendered — this no longer blocks or delays
-    // display, it's purely a background analytics call.
     if (!sessionTrackerId || !template || trackedViewRef.done) return;
     trackedViewRef.done = true;
 
@@ -61,7 +59,6 @@ export default function DetailClient({ template }) {
     setCheckoutLoading(false);
   };
 
-  // Images mapping sequence
   const images = [];
   if (template.details) {
     Object.keys(template.details)
@@ -152,14 +149,9 @@ export default function DetailClient({ template }) {
           </div>
 
           <div className={styles.navCard}>
-            {/* Previously a <button> nested inside a <Link> (which renders an <a>) — nesting
-                one interactive element inside another is invalid HTML, and browsers/React's
-                production event delegation can resolve clicks on it inconsistently (this is
-                the likely reason it worked in dev but not in the deployed build). Using the
-                router directly on a single <button> avoids the invalid nesting entirely. */}
-            <button className={styles.secondaryBtn} onClick={() => router.push("/")}>
+            <Link href="/" className={styles.secondaryBtn} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <FaArrowLeft /> Explore More Templates
-            </button>
+            </Link>
           </div>
         </aside>
       </div>
