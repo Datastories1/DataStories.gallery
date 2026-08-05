@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaChevronLeft, FaChevronRight, FaShoppingCart, FaArrowLeft } from "react-icons/fa";
 import { useCart } from "@/context/CartContext";
 import styles from "./Details.module.css";
 
 export default function DetailClient({ template }) {
+  const router = useRouter();
   const { addToCart, sessionTrackerId } = useCart(); // 🛒 Using central synchronized tracker
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -151,11 +152,14 @@ export default function DetailClient({ template }) {
           </div>
 
           <div className={styles.navCard}>
-            <Link href="/">
-              <button className={styles.secondaryBtn}>
-                <FaArrowLeft /> Explore More Templates
-              </button>
-            </Link>
+            {/* Previously a <button> nested inside a <Link> (which renders an <a>) — nesting
+                one interactive element inside another is invalid HTML, and browsers/React's
+                production event delegation can resolve clicks on it inconsistently (this is
+                the likely reason it worked in dev but not in the deployed build). Using the
+                router directly on a single <button> avoids the invalid nesting entirely. */}
+            <button className={styles.secondaryBtn} onClick={() => router.push("/")}>
+              <FaArrowLeft /> Explore More Templates
+            </button>
           </div>
         </aside>
       </div>
